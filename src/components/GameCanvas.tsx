@@ -1,7 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GameState, GameObject, HookState, GameAssets, LevelConfig } from '../types';
+import { GameState, GameObject, GameAssets, LevelConfig } from '../types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS, USE_LOCAL_ASSETS } from '../constants';
+// --- 在 import 下方直接粘贴这段代码 ---
 
+export interface HookState {
+  angle: number;
+  direction: number;
+  isExtending: boolean;
+  isRetrieving: boolean;
+  x: number;
+  y: number;
+  attachedObject?: GameObject;
+}
+
+// -------------------------------------
 interface GameCanvasProps {
   assets: GameAssets;
   gameState: GameState;
