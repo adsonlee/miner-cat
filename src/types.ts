@@ -1,4 +1,6 @@
-// ------------- Game State Enum -------------
+// -----------------------------
+// Game State
+// -----------------------------
 export enum GameState {
   MENU = 'MENU',
   PLAYING = 'PLAYING',
@@ -6,7 +8,9 @@ export enum GameState {
   GAME_OVER = 'GAME_OVER',
 }
 
-// ------------- Game Assets -------------
+// -----------------------------
+// Game Assets
+// -----------------------------
 export interface GameAssets {
   ropeColor: string;
   minerImage?: string;
@@ -14,40 +18,48 @@ export interface GameAssets {
   backgroundImage?: string;
 }
 
-// ------------- Level Configuration -------------
+// -----------------------------
+// Level Configuration
+// -----------------------------
 export interface LevelConfig {
   targetScore: number;
   timeLimit: number;
   objectCount: number;
+
   itemDistribution: {
     gold: number;
     rock: number;
     diamond: number;
     mystery: number;
   };
+
   minSpawnDepthFactor: number;
 }
 
-// ------------- Game Objects -------------
+// -----------------------------
+// Game Object
+// -----------------------------
 export interface GameObject {
   id: string;
   x: number;
   y: number;
   width: number;
   height: number;
+
   type: 'gold' | 'rock' | 'diamond' | 'mystery';
   value: number;
   weight: number;
 }
 
-// Hook movement state
+// -----------------------------
+// Hook State (THIS WAS MISSING)
+// -----------------------------
 export interface HookState {
-  angle: number;              // current angle of the hook
-  direction: number;          // rotation direction (1 or -1)
-  isExtending: boolean;       // whether the hook is extending forward
-  isRetrieving: boolean;      // whether hook is retracting with an object
-  x: number;                  // current x position
-  y: number;                  // current y position
-  attachedObject?: GameObject; // object being pulled back
+  angle: number;              // hook rotation angle
+  direction: number;          // rotating direction
+  isExtending: boolean;       // going out
+  isRetrieving: boolean;      // pulling back
+  x: number;                  // hook x position
+  y: number;                  // hook y position
+  attachedObject?: GameObject; // what it caught
 }
-
