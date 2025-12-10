@@ -1,9 +1,12 @@
 name: Deploy to GitHub Pages
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
-      - main # Change this to your default branch if it's not main
+      - main
 
 jobs:
   build-and-deploy:
@@ -16,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a Node.js version compatible with your project
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
@@ -29,4 +32,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          # cname: example.com # Uncomment and set your custom domain if you have one
