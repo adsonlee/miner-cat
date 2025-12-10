@@ -1,3 +1,5 @@
+// 文件路径: src/types.ts
+
 // -----------------------------
 // Game State
 // -----------------------------
@@ -52,14 +54,14 @@ export interface GameObject {
 }
 
 // -----------------------------
-// Hook State (THIS WAS MISSING)
+// Hook State
 // -----------------------------
 export interface HookState {
-  angle: number;              // hook rotation angle
-  direction: number;          // rotating direction
-  isExtending: boolean;       // going out
-  isRetrieving: boolean;      // pulling back
-  x: number;                  // hook x position
-  y: number;                  // hook y position
-  attachedObject?: GameObject; // what it caught
+  angle: number;              // 钩子角度
+  direction: number;          // 摆动方向 (1 或 -1)
+  isExtending: boolean;       // 是否正在伸出
+  isRetrieving: boolean;      // 是否正在收回
+  x: number;                  // 钩子当前的 x 坐标
+  y: number;                  // 钩子当前的 y 坐标
+  attachedObject?: GameObject; // 抓到的物体（可选）
 }
