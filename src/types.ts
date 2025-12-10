@@ -39,3 +39,15 @@ export interface GameObject {
   value: number;
   weight: number;
 }
+
+// Hook movement state
+export interface HookState {
+  angle: number;              // current angle of the hook
+  direction: number;          // rotation direction (1 or -1)
+  isExtending: boolean;       // whether the hook is extending forward
+  isRetrieving: boolean;      // whether hook is retracting with an object
+  x: number;                  // current x position
+  y: number;                  // current y position
+  attachedObject?: GameObject; // object being pulled back
+}
+
