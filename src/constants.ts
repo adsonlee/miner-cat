@@ -26,3 +26,20 @@ export const INITIAL_LEVEL_CONFIG = {
   },
   minSpawnDepthFactor: 0.1,
 };
+
+// src/constants.ts
+
+// ... (保留上面原有的代码，不要删除) ...
+
+// --- 请将以下代码复制并粘贴到文件最下方 ---
+
+export const REMOTE_ASSETS = {
+  // 这里的链接是临时占位图，构建成功后您可以替换成真实链接
+  minerImage: 'https://placehold.co/64x64/orange/white?text=Miner',
+  hookImage: 'https://placehold.co/32x32/gray/white?text=Hook',
+  backgroundImage: 'https://placehold.co/800x600/1a1a2e/white?text=BG',
+  gold: 'https://placehold.co/40x40/gold/white?text=Gold',
+  rock: 'https://placehold.co/40x40/555/white?text=Rock',
+  diamond: 'https://placehold.co/30x30/cyan/white?text=Diamond',
+  mystery: 'https://placehold.co/40x40/purple/white?text=?'
+};
