@@ -1,19 +1,18 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GameState, GameObject, GameAssets, LevelConfig } from '../types';
-// 修复核心：同时定义 Enum 和 Interface
-// ==========================================
 
-// 1. 定义枚举 (解决 ReferenceError)
-// 这里的名字叫 HookState，这样代码里写 HookState.IDLE 就不会报错了
+// --- 修复开始 ---
+
+// 1. 定义运行时需要的 Enum对象
 export enum HookState {
-  IDLE = 'IDLE',           // 摇摆中
-  EXTENDING = 'EXTENDING', // 发射中
-  RETRIEVING = 'RETRIEVING' // 收回中
+  IDLE = 'IDLE',
+  EXTENDING = 'EXTENDING',
+  RETRIEVING = 'RETRIEVING'
 }
 
-// 2. 定义接口 (解决类型定义)
-// 注意：这里改名为 IHookState，以免和上面的 Enum 名字冲突
-export interface IHookState {
+// 2. 为了避免类型冲突，我们定义数据接口，并在这文件里暂时用 `any` 
+// 或者你需要手动把代码里 useState<HookState> 改成 useState<HookData>
+export interface HookData {
   angle: number;
   direction: number;
   isExtending: boolean;
@@ -21,9 +20,11 @@ export interface IHookState {
   x: number;
   y: number;
   attachedObject?: GameObject;
-  // 如果你的代码里用 status 字段记录状态，可以加上这个：
-  status?: HookState; 
+  status?: HookState;
 }
+// --- 修复结束 ---
+
+import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS } from '../constants';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS, USE_LOCAL_ASSETS } from '../constants';
 // --- 在 import 下方直接粘贴这段代码 ---
 
