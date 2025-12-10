@@ -1,40 +1,25 @@
-// Canvas dimensions
-export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 600;
-
-// Miner vertical offset from top
-export const MINER_OFFSET_Y = 120;
-
-// Default asset settings
-export const DEFAULT_ASSETS = {
-  ropeColor: '#8B4513',
-  minerImage: '',
-  hookImage: '',
-  backgroundImage: '',
-};
-
-// Default level settings
-export const INITIAL_LEVEL_CONFIG = {
-  targetScore: 400,
-  timeLimit: 60,
-  objectCount: 5,
-  itemDistribution: {
-    gold: 0.5,
-    rock: 0.2,
-    diamond: 0.2,
-    mystery: 0.1,
-  },
-  minSpawnDepthFactor: 0.1,
-};
-
 // src/constants.ts
 
-// ... (保留上面原有的代码，不要删除) ...
+// -----------------------------
+// 游戏画布与布局
+// -----------------------------
+export const CANVAS_WIDTH = 800;
+export const CANVAS_HEIGHT = 600;
+export const MINER_OFFSET_Y = 100; // 矿工距离顶部的偏移量
 
-// --- 请将以下代码复制并粘贴到文件最下方 ---
+// -----------------------------
+// 钩子物理参数
+// -----------------------------
+export const ROTATION_SPEED = 1.5;       // 钩子摆动速度 (缺失导致报错的项)
+export const MAX_ANGLE = 70;             // 最大摆动角度
+export const MIN_ANGLE = -70;            // 最小摆动角度
+export const HOOK_SPEED_EXTEND = 5;      // 钩子伸出速度
+export const HOOK_SPEED_RETRIEVE_BASE = 5; // 钩子基础收回速度
 
+// -----------------------------
+// 游戏资源链接
+// -----------------------------
 export const REMOTE_ASSETS = {
-  // 这里的链接是临时占位图，构建成功后您可以替换成真实链接
   minerImage: 'https://placehold.co/64x64/orange/white?text=Miner',
   hookImage: 'https://placehold.co/32x32/gray/white?text=Hook',
   backgroundImage: 'https://placehold.co/800x600/1a1a2e/white?text=BG',
