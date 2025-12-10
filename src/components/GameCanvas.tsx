@@ -1,5 +1,29 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { GameState, GameObject, GameAssets, LevelConfig } from '../types';
+// 修复核心：同时定义 Enum 和 Interface
+// ==========================================
+
+// 1. 定义枚举 (解决 ReferenceError)
+// 这里的名字叫 HookState，这样代码里写 HookState.IDLE 就不会报错了
+export enum HookState {
+  IDLE = 'IDLE',           // 摇摆中
+  EXTENDING = 'EXTENDING', // 发射中
+  RETRIEVING = 'RETRIEVING' // 收回中
+}
+
+// 2. 定义接口 (解决类型定义)
+// 注意：这里改名为 IHookState，以免和上面的 Enum 名字冲突
+export interface IHookState {
+  angle: number;
+  direction: number;
+  isExtending: boolean;
+  isRetrieving: boolean;
+  x: number;
+  y: number;
+  attachedObject?: GameObject;
+  // 如果你的代码里用 status 字段记录状态，可以加上这个：
+  status?: HookState; 
+}
 import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS, USE_LOCAL_ASSETS } from '../constants';
 // --- 在 import 下方直接粘贴这段代码 ---
 
