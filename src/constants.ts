@@ -17,29 +17,32 @@ export const HOOK_SPEED_EXTEND = 5;
 export const HOOK_SPEED_RETRIEVE_BASE = 5;
 
 // -----------------------------
-// 资源路径配置
+// 资源路径配置 (核心修复点)
 // -----------------------------
-// 注意：这里的路径是相对于构建后的根目录的
-// Vite 会把 public/assets 里的东西放在 dist/assets 下
-// 使用 './assets/' 可以在 GitHub Pages (子路径) 上正常工作
-const REPO_BASE = '/miner-cat'; 
 
-// 2. 拼接完整的绝对路径
-const LOCAL_PATH = `${REPO_BASE}/assets`;
+// import.meta.env.BASE_URL 是 Vite 自动提供的环境变量
+// 1. 本地开发时，它通常是 "/"
+// 2. 部署到 GitHub 时，它是 "/miner-cat/" (取决于你的 vite.config.ts 配置)
+const BASE_URL = import.meta.env.BASE_URL;
 
+// 确保路径拼接正确：Base URL + assets 文件夹
+// 最终结果类似: "/miner-cat/assets"
+const ASSETS_PREFIX = `${BASE_URL}assets`; 
+
+// 定义本地资源路径
+// 注意：不要在路径开头再加 "." 或 "/"，ASSETS_PREFIX 已经包含了
 const BASE_ASSETS = {
   ropeColor: '#8B4513',
-  // 修改这里：指向本地文件
-  minerImage: `${LOCAL_PATH}/miner.png`, 
-  hookImage: `${LOCAL_PATH}/hook.png`,
-  backgroundImage: `${LOCAL_PATH}/background.jpg`,
-  gold: `${LOCAL_PATH}/gold.png`,
-  rock: `${LOCAL_PATH}/rock.png`,
-  diamond: `${LOCAL_PATH}/diamond.png`,
-  mystery: `${LOCAL_PATH}/mystery.png`
+  minerImage: `${ASSETS_PREFIX}/miner.png`, 
+  hookImage: `${ASSETS_PREFIX}/hook.png`,
+  backgroundImage: `${ASSETS_PREFIX}/background.png`,
+  gold: `${ASSETS_PREFIX}/gold.png`,
+  rock: `${ASSETS_PREFIX}/rock.png`,
+  diamond: `${ASSETS_PREFIX}/diamond.png`,
+  mystery: `${ASSETS_PREFIX}/mystery.png`
 };
 
-// 备用远程资源 (如果本地图片加载失败，GameCanvas 会尝试加载这些)
+// 备用远程资源 (当上面的本地路径 404 时，会自动加载这些)
 export const REMOTE_ASSETS = {
   minerImage: 'https://placehold.co/64x64/orange/white?text=Miner',
   hookImage: 'https://placehold.co/32x32/gray/white?text=Hook',
@@ -50,7 +53,6 @@ export const REMOTE_ASSETS = {
   mystery: 'https://placehold.co/40x40/purple/white?text=?'
 };
 
-// 导出默认配置
 export const DEFAULT_ASSETS = BASE_ASSETS;
 
 // -----------------------------
