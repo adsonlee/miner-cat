@@ -30,31 +30,21 @@ const App: React.FC = () => {
       let width = 40;
       let height = 40;
 
-      // 根据概率分布决定物体类型
       if (rand < itemDistribution.gold) {
         type = 'gold';
         const sizeVariant = Math.random();
-        if (sizeVariant < 0.3) { // 小金块
-          value = 50; weight = 1; width = 30; height = 30;
-        } else if (sizeVariant < 0.8) { // 中金块
-          value = 100; weight = 2; width = 50; height = 50;
-        } else { // 大金块
-          value = 500; weight = 5; width = 70; height = 70;
-        }
+        if (sizeVariant < 0.3) { value = 50; weight = 1; width = 30; height = 30; }
+        else if (sizeVariant < 0.8) { value = 100; weight = 2; width = 50; height = 50; }
+        else { value = 500; weight = 5; width = 70; height = 70; }
       } else if (rand < itemDistribution.gold + itemDistribution.rock) {
         type = 'rock';
         value = 11;
         const sizeVariant = Math.random();
-        if (sizeVariant < 0.5) {
-           weight = 3; width = 40; height = 40;
-        } else {
-           weight = 5; width = 60; height = 60;
-        }
+        if (sizeVariant < 0.5) { weight = 3; width = 40; height = 40; }
+        else { weight = 5; width = 60; height = 60; }
       } else if (rand < itemDistribution.gold + itemDistribution.rock + itemDistribution.diamond) {
         type = 'diamond';
-        value = 600;
-        weight = 0.5;
-        width = 30; height = 30;
+        value = 600; weight = 0.5; width = 30; height = 30;
       } else {
         type = 'mystery';
         value = Math.random() < 0.5 ? 50 : 800;
@@ -125,7 +115,7 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [gameState, gameTime]);
 
-  // 5. 渲染界面 (Arcade 风格布局)
+  // 5. 渲染界面
   return (
     <div className="min-h-screen w-full bg-zinc-900 flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
@@ -150,30 +140,32 @@ const App: React.FC = () => {
         {/* --- 顶部状态栏 (HUD) --- */}
         <div className="bg-slate-900/90 text-white px-6 py-4 flex justify-between items-center border-b-4 border-slate-700 shadow-md z-20">
            
-           {/* 分数 */}
+           {/* 分数面板 (修改点：更黑、更明显的背景) */}
            <div className="flex flex-col">
               <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-1">Current Gold</span>
-              <div className="bg-black/50 px-3 py-1 rounded border border-white/10 min-w-[100px]">
-                <span className="text-2xl font-mono text-amber-300 drop-shadow-sm leading-none block text-right">
+              {/* 改动：bg-black (纯黑), shadow-inner (内阴影), border-slate-600 (边框更明显) */}
+              <div className="bg-black shadow-inner px-4 py-2 rounded-lg border-2 border-slate-700 min-w-[120px]">
+                <span className="text-2xl font-mono text-amber-400 drop-shadow-md leading-none block text-right">
                   {score.toString().padStart(4, '0')}
                 </span>
               </div>
            </div>
            
-           {/* 时间 */}
+           {/* 时间 (保持不变) */}
            <div className="flex flex-col items-center mx-4">
-              <div className={`relative w-16 h-16 flex items-center justify-center rounded-full border-4 ${gameTime < 10 ? 'border-red-500 bg-red-900/20' : 'border-slate-600 bg-slate-800'}`}>
+              <div className={`relative w-16 h-16 flex items-center justify-center rounded-full border-4 shadow-lg ${gameTime < 10 ? 'border-red-500 bg-red-900/20' : 'border-slate-600 bg-slate-800'}`}>
                 <span className={`text-2xl font-bold font-mono ${gameTime < 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                   {gameTime}
                 </span>
               </div>
            </div>
 
-           {/* 目标 */}
+           {/* 目标面板 (修改点：更黑、更明显的背景) */}
            <div className="flex flex-col items-end">
               <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1">Target</span>
-              <div className="bg-black/50 px-3 py-1 rounded border border-white/10 min-w-[100px]">
-                <span className="text-2xl font-mono text-blue-200 leading-none block text-right">
+              {/* 改动：bg-black (纯黑), shadow-inner (内阴影), border-slate-700 */}
+              <div className="bg-black shadow-inner px-4 py-2 rounded-lg border-2 border-slate-700 min-w-[120px]">
+                <span className="text-2xl font-mono text-blue-300 drop-shadow-md leading-none block text-right">
                    {INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200}
                 </span>
               </div>
@@ -215,9 +207,9 @@ const App: React.FC = () => {
               <span className="text-slate-400 font-bold uppercase tracking-widest text-sm">Level {level}</span>
            </div>
            
+           {/* 改动：移除了右侧不需要的文字 */}
            <div className="flex gap-4 text-[10px] text-slate-500 uppercase font-mono">
-              <span>HD RUMBLE</span>
-              <span>AUTO-SAVE</span>
+              {/* Empty or Add version number if needed */}
            </div>
         </div>
 
