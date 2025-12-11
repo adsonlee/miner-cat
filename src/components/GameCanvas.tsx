@@ -1,3 +1,5 @@
+// src/components/GameCanvas.tsx
+
 import React, { useRef, useEffect, useState } from 'react';
 import { GameState, GameObject, GameAssets, LevelConfig } from '../types';
 import { 
@@ -54,8 +56,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Game Logic State (使用 Refs 以获得更好的动画性能)
-  const hookAngleRef = useRef(Math.PI / 2);
-  const hookDirectionRef = useRef(1); // 1 or -1
+  // 核心修复：初始角度为 0 (垂直向下)，不再是 PI/2
+  const hookAngleRef = useRef(0);
+  const hookDirectionRef = useRef(1); // 1 (向右) or -1 (向左)
   const hookStateRef = useRef<HookState>(HookState.IDLE);
   const hookLengthRef = useRef(30);
   const caughtObjectRef = useRef<GameObject | null>(null);
@@ -64,7 +67,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const setScoreRef = useRef(setScore);
   
   // Track the actual source used for miner (in case of fallback)
-  // 确保有默认值，防止 undefined
   const [activeMinerSrc, setActiveMinerSrc] = useState<string>(assets.minerImage || REMOTE_ASSETS.minerImage);
 
   // 更新 ref 以便在闭包中使用最新的 setScore
@@ -83,6 +85,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     if (gameState === GameState.PLAYING) {
       hookLengthRef.current = 30;
+      hookAngleRef.current = 0; // 重置为垂直向下
       hookStateRef.current = HookState.IDLE;
       caughtObjectRef.current = null;
     }
@@ -97,7 +100,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Load Images with Fallback
   useEffect(() => {
-   // 映射 assets key 到 image key
+    // 映射 assets key 到 image key
+    // 核心修复：优先使用传入的 assets (本地图片)，其次才是 REMOTE_ASSETS
     const imageMap = {
       miner: assets.minerImage || REMOTE_ASSETS.minerImage,
       hook: assets.hookImage || REMOTE_ASSETS.hookImage,
@@ -109,20 +113,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
 
     Object.entries(imageMap).forEach(([key, src]) => {
+      if (!src) return;
       const img = new Image();
       
       img.onerror = () => {
         // Fallback logic
         const remoteSrc = (REMOTE_ASSETS as any)[key === 'miner' ? 'minerImage' : key === 'hook' ? 'hookImage' : key === 'background' ? 'backgroundImage' : key];
         if (src !== remoteSrc && remoteSrc) {
-           console.warn(`Failed to load asset: ${key}. Falling back.`);
+           console.warn(`Failed to load asset: ${key}. Falling back to remote.`);
            img.src = remoteSrc;
            if (key === 'miner') setActiveMinerSrc(remoteSrc);
         }
       };
 
       img.onload = () => {
-        // Special processing for miner image (简单的透明度处理)
+        // Special processing for miner image (简单的透明度处理，去除白底)
         if (key === 'miner') {
           try {
             const canvas = document.createElement('canvas');
@@ -131,7 +136,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0);
-              // 这里简化处理，直接保存
               loadedImagesRef.current[key] = img;
               return;
             }
@@ -187,10 +191,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // Hook Logic
         const originX = CANVAS_WIDTH / 2;
         const originY = MINER_OFFSET_Y - 20;
+        
+        // 核心修复：统一使用弧度计算
+        // 0 度 = 垂直向下
+        const rad = hookAngleRef.current * Math.PI / 180;
 
         // Swing
         if (hookStateRef.current === HookState.IDLE) {
           hookAngleRef.current += ROTATION_SPEED * hookDirectionRef.current;
+          // 限制角度在 -70 到 70 之间
           if (hookAngleRef.current > MAX_ANGLE || hookAngleRef.current < MIN_ANGLE) {
             hookDirectionRef.current *= -1;
           }
@@ -199,8 +208,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         else if (hookStateRef.current === HookState.EXTENDING) {
           hookLengthRef.current += HOOK_SPEED_EXTEND;
           
-          const tipX = originX + Math.cos(hookAngleRef.current * Math.PI / 180) * hookLengthRef.current;
-          const tipY = originY + Math.sin(hookAngleRef.current * Math.PI / 180) * hookLengthRef.current;
+          // 核心修复：使用 sin 计算 X (左右)，cos 计算 Y (上下)
+          const tipX = originX + Math.sin(rad) * hookLengthRef.current;
+          const tipY = originY + Math.cos(rad) * hookLengthRef.current;
           
           // Hit Bounds
           if (tipX < 0 || tipX > CANVAS_WIDTH || tipY > CANVAS_HEIGHT) {
@@ -227,7 +237,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         else if (hookStateRef.current === HookState.RETRIEVING) {
           let speed = HOOK_SPEED_RETRIEVE_BASE;
           if (caughtObjectRef.current) {
-            // 简单的重量模拟：value 越大通常越重
             const weight = caughtObjectRef.current.weight || 1; 
             speed = Math.max(1, HOOK_SPEED_RETRIEVE_BASE / weight);
           }
@@ -253,10 +262,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
            ctx.drawImage(loadedImagesRef.current.miner, originX + 20, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
         }
 
-        // Draw Rope
-        const rad = hookAngleRef.current * Math.PI / 180;
-        const hookTipX = originX + Math.cos(rad) * hookLengthRef.current;
-        const hookTipY = originY + Math.sin(rad) * hookLengthRef.current;
+        // Draw Rope (使用修正后的公式)
+        const hookTipX = originX + Math.sin(rad) * hookLengthRef.current;
+        const hookTipY = originY + Math.cos(rad) * hookLengthRef.current;
 
         ctx.beginPath();
         ctx.moveTo(originX, originY);
@@ -268,7 +276,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // Draw Hook
         ctx.save();
         ctx.translate(hookTipX, hookTipY);
-        ctx.rotate(rad - Math.PI/2);
+        // 旋转图片以匹配绳子角度
+        ctx.rotate(rad);
         if (loadedImagesRef.current.hook) {
           ctx.drawImage(loadedImagesRef.current.hook, -15, -15, 30, 30);
         } else {
@@ -281,6 +290,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const obj = caughtObjectRef.current;
           const img = loadedImagesRef.current[obj.type];
           if (img) {
+             // 简单的旋转抵消，让物品看起来是挂在钩子上的
              ctx.drawImage(img, -obj.width/2, 5, obj.width, obj.height);
           }
         }
@@ -326,7 +336,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onTouchStart={(e) => { e.preventDefault(); handleAction(); }}
       />
       
-      {/* GIF Overlay (安全检查: 确保 activeMinerSrc 存在) */}
+      {/* GIF Overlay */}
       {activeMinerSrc && activeMinerSrc.toLowerCase().endsWith('.gif') && gameState === GameState.PLAYING && (
         <img 
           src={activeMinerSrc} 
