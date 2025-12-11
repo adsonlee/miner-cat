@@ -97,15 +97,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Load Images with Fallback
   useEffect(() => {
-    // 映射 assets key 到 image key
+   // 映射 assets key 到 image key
     const imageMap = {
       miner: assets.minerImage || REMOTE_ASSETS.minerImage,
       hook: assets.hookImage || REMOTE_ASSETS.hookImage,
       background: assets.backgroundImage || REMOTE_ASSETS.backgroundImage,
-      gold: REMOTE_ASSETS.gold, // 假设物体目前只用远程图片，或者你可以从 assets 传入
-      rock: REMOTE_ASSETS.rock,
-      diamond: REMOTE_ASSETS.diamond,
-      mystery: REMOTE_ASSETS.mystery
+      gold: assets.gold || REMOTE_ASSETS.gold,
+      rock: assets.rock || REMOTE_ASSETS.rock,
+      diamond: assets.diamond || REMOTE_ASSETS.diamond,
+      mystery: assets.mystery || REMOTE_ASSETS.mystery
     };
 
     Object.entries(imageMap).forEach(([key, src]) => {
