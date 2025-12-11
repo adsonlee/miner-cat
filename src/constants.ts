@@ -5,7 +5,7 @@
 // ==========================================
 import minerImg from './assets/miner.png';
 import hookImg from './assets/hook.png';
-import bgImg from './assets/background.png';
+import bgImg from './assets/background.gif';
 import goldImg from './assets/gold.png';
 import rockImg from './assets/rock.png';
 import diamondImg from './assets/diamond.png';
