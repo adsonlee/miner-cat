@@ -1,5 +1,20 @@
 // src/constants.ts
 
+// ==========================================
+// 核心修复：直接导入图片资源
+// Vite 会自动处理这些路径，无论是在本地还是 GitHub Pages
+// ==========================================
+
+// 如果你的 VS Code 在这里报错红色波浪线，请看“第三步”修复 TypeScript 定义
+// 确保图片都在 src/assets/ 目录下
+import minerImg from './assets/miner.png';
+import hookImg from './assets/hook.png';
+import bgImg from './assets/background.png';
+import goldImg from './assets/gold.png';
+import rockImg from './assets/rock.png';
+import diamondImg from './assets/diamond.png';
+import mysteryImg from './assets/mystery.png';
+
 // -----------------------------
 // 游戏画布与布局
 // -----------------------------
@@ -17,32 +32,19 @@ export const HOOK_SPEED_EXTEND = 5;
 export const HOOK_SPEED_RETRIEVE_BASE = 5;
 
 // -----------------------------
-// 资源路径配置 (核心修复点)
+// 资源配置
 // -----------------------------
-
-// import.meta.env.BASE_URL 是 Vite 自动提供的环境变量
-// 1. 本地开发时，它通常是 "/"
-// 2. 部署到 GitHub 时，它是 "/miner-cat/" (取决于你的 vite.config.ts 配置)
-const BASE_URL = import.meta.env.BASE_URL;
-
-// 确保路径拼接正确：Base URL + assets 文件夹
-// 最终结果类似: "/miner-cat/assets"
-const ASSETS_PREFIX = `${BASE_URL}assets`; 
-
-// 定义本地资源路径
-// 注意：不要在路径开头再加 "." 或 "/"，ASSETS_PREFIX 已经包含了
 const BASE_ASSETS = {
   ropeColor: '#8B4513',
-  minerImage: `${ASSETS_PREFIX}/miner.png`, 
-  hookImage: `${ASSETS_PREFIX}/hook.png`,
-  backgroundImage: `${ASSETS_PREFIX}/background.png`,
-  gold: `${ASSETS_PREFIX}/gold.png`,
-  rock: `${ASSETS_PREFIX}/rock.png`,
-  diamond: `${ASSETS_PREFIX}/diamond.png`,
-  mystery: `${ASSETS_PREFIX}/mystery.png`
+  minerImage: minerImg,    // 直接使用导入的变量
+  hookImage: hookImg,
+  backgroundImage: bgImg,
+  gold: goldImg,
+  rock: rockImg,
+  diamond: diamondImg,
+  mystery: mysteryImg
 };
 
-// 备用远程资源 (当上面的本地路径 404 时，会自动加载这些)
 export const REMOTE_ASSETS = {
   minerImage: 'https://placehold.co/64x64/orange/white?text=Miner',
   hookImage: 'https://placehold.co/32x32/gray/white?text=Hook',
