@@ -29,7 +29,7 @@ const BASE_ASSETS = {
   // 修改这里：指向本地文件
   minerImage: `${LOCAL_PATH}/miner.png`, 
   hookImage: `${LOCAL_PATH}/hook.png`,
-  backgroundImage: `${LOCAL_PATH}/background.png`,
+  backgroundImage: `${LOCAL_PATH}/background.jpg`,
   gold: `${LOCAL_PATH}/gold.png`,
   rock: `${LOCAL_PATH}/rock.png`,
   diamond: `${LOCAL_PATH}/diamond.png`,
