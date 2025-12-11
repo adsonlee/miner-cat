@@ -17,10 +17,27 @@ export const HOOK_SPEED_EXTEND = 5;
 export const HOOK_SPEED_RETRIEVE_BASE = 5;
 
 // -----------------------------
-// 资源定义 (定义一次，导出多次以适配不同文件的引用名)
+// 资源路径配置
 // -----------------------------
+// 注意：这里的路径是相对于构建后的根目录的
+// Vite 会把 public/assets 里的东西放在 dist/assets 下
+// 使用 './assets/' 可以在 GitHub Pages (子路径) 上正常工作
+const LOCAL_PATH = './assets';
+
 const BASE_ASSETS = {
   ropeColor: '#8B4513',
+  // 修改这里：指向本地文件
+  minerImage: `${LOCAL_PATH}/miner.png`, 
+  hookImage: `${LOCAL_PATH}/hook.png`,
+  backgroundImage: `${LOCAL_PATH}/background.png`,
+  gold: `${LOCAL_PATH}/gold.png`,
+  rock: `${LOCAL_PATH}/rock.png`,
+  diamond: `${LOCAL_PATH}/diamond.png`,
+  mystery: `${LOCAL_PATH}/mystery.png`
+};
+
+// 备用远程资源 (如果本地图片加载失败，GameCanvas 会尝试加载这些)
+export const REMOTE_ASSETS = {
   minerImage: 'https://placehold.co/64x64/orange/white?text=Miner',
   hookImage: 'https://placehold.co/32x32/gray/white?text=Hook',
   backgroundImage: 'https://placehold.co/800x600/1a1a2e/white?text=BG',
@@ -30,24 +47,21 @@ const BASE_ASSETS = {
   mystery: 'https://placehold.co/40x40/purple/white?text=?'
 };
 
-// App.tsx 需要 DEFAULT_ASSETS
+// 导出默认配置
 export const DEFAULT_ASSETS = BASE_ASSETS;
 
-// GameCanvas.tsx 可能还在引用 REMOTE_ASSETS
-export const REMOTE_ASSETS = BASE_ASSETS; 
-
 // -----------------------------
-// 关卡配置 (修复 App.tsx 报错的关键)
+// 关卡配置
 // -----------------------------
 export const INITIAL_LEVEL_CONFIG = {
-  targetScore: 650,     // 目标分数
-  timeLimit: 60,        // 时间限制(秒)
-  objectCount: 12,      // 生成物体数量
-  itemDistribution: {   // 物品生成概率权重
+  targetScore: 650,
+  timeLimit: 60,
+  objectCount: 12,
+  itemDistribution: {
     gold: 0.35,
     rock: 0.35,
     diamond: 0.1,
     mystery: 0.2
   },
-  minSpawnDepthFactor: 0.3 // 最小生成深度系数
+  minSpawnDepthFactor: 0.3
 };
