@@ -325,16 +325,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+
   return (
-    <div className="relative w-full max-w-[800px] aspect-[4/3] mx-auto shadow-2xl rounded-xl overflow-hidden bg-transparent border-4 border-amber-500">
+    <div className="relative w-full h-full overflow-hidden bg-transparent">
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        className="w-full h-full block touch-none cursor-crosshair"
+        className="w-full h-full block touch-none cursor-crosshair" // 保持 block 避免 canvas 底部白边
         onMouseDown={handleAction}
         onTouchStart={(e) => { e.preventDefault(); handleAction(); }}
       />
+      
+      {/* ... 下面的 GIF, MENU, GAME_OVER 代码保持不变 ... */}
       
       {/* GIF Overlay */}
       {activeMinerSrc && activeMinerSrc.toLowerCase().endsWith('.gif') && gameState === GameState.PLAYING && (
