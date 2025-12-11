@@ -16,7 +16,7 @@ import mysteryImg from './assets/mystery.png';
 // -----------------------------
 export const CANVAS_WIDTH = 600;  // 变窄
 export const CANVAS_HEIGHT = 800; // 变高
-export const MINER_OFFSET_Y = 120; // 稍微增加顶部天空高度，协调比例
+export const MINER_OFFSET_Y = 240; // 稍微增加顶部天空高度，协调比例
 
 // -----------------------------
 // 钩子物理参数
