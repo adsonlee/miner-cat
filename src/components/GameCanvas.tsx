@@ -79,9 +79,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [gameState, gameObjects.length, setGameState]);
 
-  // =================================================================
-  // 核心修改：图片加载与透明度处理
-  // =================================================================
+  // Load Images with Transparency Fix
   useEffect(() => {
     const imageMap = {
       miner: assets.minerImage || REMOTE_ASSETS.minerImage,
@@ -107,53 +105,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       };
 
       img.onload = () => {
-        // === 核心修复：针对矿工角色进行“白底抠图”处理 ===
         if (key === 'miner' && !src.toLowerCase().endsWith('.gif')) {
           try {
-            // 1. 创建一个临时 Canvas
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = img.width;
             tempCanvas.height = img.height;
-            // 开启 willReadFrequently 以优化像素读取性能
             const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
 
             if (tempCtx) {
-              // 2. 把原图画上去
               tempCtx.drawImage(img, 0, 0);
-              // 3. 获取所有像素数据
               const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
               const data = imageData.data;
-
-              // 4. 遍历每个像素 (R, G, B, A)
               for (let i = 0; i < data.length; i += 4) {
                 const r = data[i];
                 const g = data[i + 1];
                 const b = data[i + 2];
-                // 如果像素接近白色 (RGB都大于240，给予一点容差)
                 if (r > 240 && g > 240 && b > 240) {
-                  // 将 Alpha 通道设为 0 (完全透明)
                   data[i + 3] = 0;
                 }
               }
-
-              // 5. 把处理后的数据放回 Canvas
               tempCtx.putImageData(imageData, 0, 0);
-
-              // 6. 将处理后的 Canvas 转回为新的图片对象
               const processedImg = new Image();
               processedImg.onload = () => {
-                  // 存入已加载图片库
                   loadedImagesRef.current[key] = processedImg;
               };
               processedImg.src = tempCanvas.toDataURL();
-              // 重要：return 掉，不再执行下面的默认加载逻辑
               return; 
             }
           } catch (e) {
             console.warn('Image transparency processing failed, using original:', e);
           }
         }
-        // 对于其他图片或处理失败的情况，直接使用原图
         loadedImagesRef.current[key] = img;
       };
 
@@ -253,8 +235,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // --- DRAWING LAYERS ---
 
-        // 4. Draw Machinery (Tripod) - Behind everything
-        ctx.strokeStyle = '#2d3748'; // 深灰色金属
+        // 4. Draw Machinery (Tripod)
+        ctx.strokeStyle = '#2d3748';
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -264,12 +246,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.lineTo(originX + 15, MINER_OFFSET_Y);
         ctx.stroke();
 
-        // 5. Draw Miner (Cat)
-        // 这里的 loadedImagesRef.current.miner 已经是处理过透明度的图片了
+        // 5. Draw Miner (Cat) - WITH ANIMATION
         if (loadedImagesRef.current.miner && activeMinerSrc && !activeMinerSrc.toLowerCase().endsWith('.gif')) {
            const minerW = 70;
            const minerH = 70;
-           ctx.drawImage(loadedImagesRef.current.miner, originX + 5, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
+           
+           // 计算动画偏移
+           let animOffsetX = 0;
+           let animOffsetY = 0;
+
+           if (hookStateRef.current === HookState.RETRIEVING) {
+             // 收回时剧烈晃动
+             animOffsetY = Math.sin(time * 0.02) * 3;
+             animOffsetX = Math.cos(time * 0.02) * 1;
+           } else if (hookStateRef.current === HookState.EXTENDING) {
+             // 发射时轻微震动
+             animOffsetY = Math.sin(time * 0.05) * 1;
+           }
+
+           ctx.drawImage(
+             loadedImagesRef.current.miner, 
+             originX + 15 + animOffsetX, 
+             MINER_OFFSET_Y - 10 - minerH + animOffsetY, 
+             minerW, 
+             minerH
+           );
         }
 
         // 6. Draw Rope
@@ -279,11 +280,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.beginPath();
         ctx.moveTo(originX, originY);
         ctx.lineTo(hookTipX, hookTipY);
-        ctx.strokeStyle = '#3e2723'; // 绳子颜色
+        ctx.strokeStyle = '#3e2723';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 7. Draw Rotating Wheel (Pulley)
+        // 7. Draw Rotating Wheel
         ctx.save();
         ctx.translate(originX, originY);
         const wheelRotation = (hookLengthRef.current - 30) * 0.15; 
@@ -296,7 +297,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fillStyle = '#2d3748'; ctx.fill();
         ctx.restore();
 
-        // 8. Draw Hook (Claw)
+        // 8. Draw Hook
         ctx.save();
         ctx.translate(hookTipX, hookTipY);
         ctx.rotate(rad);
