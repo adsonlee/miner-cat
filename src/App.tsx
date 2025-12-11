@@ -217,7 +217,7 @@ const App: React.FC = () => {
       
       {/* 底部版权 */}
       <div className="fixed bottom-2 text-white/10 text-xs">
-        © 2024 FUJI MINER CORP
+        © 2025 FUJI MINER CORP
       </div>
 
     </div>
