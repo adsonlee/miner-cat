@@ -2,16 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 你可以保留其他自定义样式，但这三行必须在最上面 */
 body {
-  font-family: 'Fredoka', sans-serif;
-  overflow: hidden;
-}
-
-/* Custom Scrollbar for Chat */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a2e; /* 给网页一个深色背景，防止边缘白边 */
+  overflow: hidden; /* 防止出现滚动条 */
 }
