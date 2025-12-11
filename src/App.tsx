@@ -1,259 +1,210 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import GameCanvas from './components/GameCanvas';
-import { GameState, GameAssets, LevelConfig, GameObject } from './types';
-import { DEFAULT_ASSETS, INITIAL_LEVEL_CONFIG, MINER_OFFSET_Y, CANVAS_WIDTH, CANVAS_HEIGHT } from './constants';
-import { Timer, Trophy, Star } from 'lucide-react';
-
-const LEVEL_SETTINGS: LevelConfig[] = [
-  { // Level 1: Easier
-    targetScore: 400, timeLimit: 60, objectCount: 5,
-    itemDistribution: { gold: 0.5, rock: 0.2, diamond: 0.2, mystery: 0.1 },
-    minSpawnDepthFactor: 0.1
-  },
-  { // Level 2: Slightly harder
-    targetScore: 800, timeLimit: 55, objectCount: 8,
-    itemDistribution: { gold: 0.35, rock: 0.35, diamond: 0.2, mystery: 0.1 },
-    minSpawnDepthFactor: 0.15
-  },
-  { // Level 3: Moderate
-    targetScore: 1000, timeLimit: 50, objectCount: 12,
-    itemDistribution: { gold: 0.3, rock: 0.4, diamond: 0.2, mystery: 0.1 },
-    minSpawnDepthFactor: 0.2
-  },
-  { // Level 4: Increasing challenge
-    targetScore: 1250, timeLimit: 45, objectCount: 14,
-    itemDistribution: { gold: 0.25, rock: 0.45, diamond: 0.2, mystery: 0.1 },
-    minSpawnDepthFactor: 0.25
-  },
-  { // Level 5: Halfway point
-    targetScore: 1500, timeLimit: 40, objectCount: 16,
-    itemDistribution: { gold: 0.2, rock: 0.45, diamond: 0.25, mystery: 0.1 },
-    minSpawnDepthFactor: 0.3
-  },
-  { // Level 6: Harder
-    targetScore: 1800, timeLimit: 38, objectCount: 18,
-    itemDistribution: { gold: 0.2, rock: 0.4, diamond: 0.3, mystery: 0.1 },
-    minSpawnDepthFactor: 0.35
-  },
-  { // Level 7: More challenging
-    targetScore: 2100, timeLimit: 35, objectCount: 20,
-    itemDistribution: { gold: 0.15, rock: 0.4, diamond: 0.35, mystery: 0.1 },
-    minSpawnDepthFactor: 0.4
-  },
-  { // Level 8: Very hard
-    targetScore: 2400, timeLimit: 32, objectCount: 22,
-    itemDistribution: { gold: 0.1, rock: 0.4, diamond: 0.4, mystery: 0.1 },
-    minSpawnDepthFactor: 0.45
-  },
-  { // Level 9: Extremely hard
-    targetScore: 2700, timeLimit: 30, objectCount: 24,
-    itemDistribution: { gold: 0.05, rock: 0.45, diamond: 0.4, mystery: 0.1 },
-    minSpawnDepthFactor: 0.5
-  },
-  { // Level 10: Ultimate challenge
-    targetScore: 3000, timeLimit: 28, objectCount: 25,
-    itemDistribution: { gold: 0.05, rock: 0.4, diamond: 0.45, mystery: 0.1 },
-    minSpawnDepthFactor: 0.55
-  },
-];
+import { GameState, GameObject, LevelConfig } from './types';
+import { 
+  DEFAULT_ASSETS, 
+  INITIAL_LEVEL_CONFIG, 
+  CANVAS_WIDTH, 
+  CANVAS_HEIGHT, 
+  MINER_OFFSET_Y 
+} from './constants';
 
 const App: React.FC = () => {
+  // 1. 游戏核心状态
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [gameTime, setGameTime] = useState(INITIAL_LEVEL_CONFIG.timeLimit);
-
-  const resetGame = useCallback(() => {
-    setScore(0);
-    setLevel(1);
-    setGameTime(INITIAL_LEVEL_CONFIG.timeLimit);
-    setLevelConfig(INITIAL_LEVEL_CONFIG);
-  }, []);
-
-
-  
-  // Initialize assets from localStorage if available
-  const [assets, setAssets] = useState<GameAssets>(() => {
-    try {
-      const saved = localStorage.getItem('cat_miner_assets');
-      if (saved) {
-        return { ...DEFAULT_ASSETS, ...JSON.parse(saved) };
-      }
-    } catch (e) {
-      console.warn('Failed to load assets from storage', e);
-    }
-    return DEFAULT_ASSETS;
-  });
-
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [levelConfig, setLevelConfig] = useState<LevelConfig>(INITIAL_LEVEL_CONFIG);
   const [gameObjects, setGameObjects] = useState<GameObject[]>([]);
 
-  // Helper to generate random level objects
-  const generateLevel = useCallback((config?: LevelConfig) => {
-    const newObjects: GameObject[] = [];
-    const targetConfig = config || levelConfig;
-    const { itemDistribution, minSpawnDepthFactor } = targetConfig;
-
-    // Determine item types based on distribution, or use default if not specified
-    const types: GameObject['type'][] = [];
-    if (itemDistribution) {
-      for (const type in itemDistribution) {
-        for (let i = 0; i < (itemDistribution as any)[type] * 100; i++) {
-          types.push(type as GameObject['type']);
-        }
-      }
-    } else {
-      // Default distribution if not specified in levelConfig
-      types.push(...(['gold', 'gold', 'rock', 'rock', 'diamond', 'mystery'] as GameObject['type'][]));
-    }
-
-    // Ensure objects spawn strictly below the ground, adjusted by minSpawnDepthFactor
-    const spawnMinY = MINER_OFFSET_Y + 60 + (minSpawnDepthFactor || 0) * (CANVAS_HEIGHT - MINER_OFFSET_Y - 60);
+  // 2. 生成关卡物体的逻辑 (核心算法)
+  const generateLevel = useCallback((config: LevelConfig = INITIAL_LEVEL_CONFIG): GameObject[] => {
+    const objects: GameObject[] = [];
+    const { objectCount, itemDistribution, minSpawnDepthFactor } = config;
     
-    for (let i = 0; i < targetConfig.objectCount; i++) {
-      const type = types[Math.floor(Math.random() * types.length)];
-      let width = 40, height = 40, value = 0, weight = 1;
+    for (let i = 0; i < objectCount; i++) {
+      const rand = Math.random();
+      let type: 'gold' | 'rock' | 'diamond' | 'mystery' = 'gold';
+      let value = 100;
+      let weight = 1;
+      let width = 40;
+      let height = 40;
 
-      switch(type) {
-        case 'gold': 
-          width = 50; height = 30; value = 100; weight = 2; break; // Fish
-        case 'rock': 
-          width = 60; height = 60; value = 20; weight = 5; break; // Trash
-        case 'diamond': 
-          width = 30; height = 30; value = 500; weight = 1; break; // Mouse
-        case 'mystery': 
-          width = 45; height = 45; value = Math.floor(Math.random() * 800); weight = Math.random() * 4 + 1; break; // Yarn
+      // 根据概率分布决定物体类型
+      if (rand < itemDistribution.gold) {
+        type = 'gold';
+        // 随机大小的金块
+        const sizeVariant = Math.random();
+        if (sizeVariant < 0.3) { // 小金块
+          value = 50; weight = 1; width = 30; height = 30;
+        } else if (sizeVariant < 0.8) { // 中金块
+          value = 100; weight = 2; width = 50; height = 50;
+        } else { // 大金块
+          value = 500; weight = 5; width = 70; height = 70;
+        }
+      } else if (rand < itemDistribution.gold + itemDistribution.rock) {
+        type = 'rock';
+        value = 11; // 石头很不值钱
+        const sizeVariant = Math.random();
+        if (sizeVariant < 0.5) {
+           weight = 3; width = 40; height = 40;
+        } else {
+           weight = 5; width = 60; height = 60;
+        }
+      } else if (rand < itemDistribution.gold + itemDistribution.rock + itemDistribution.diamond) {
+        type = 'diamond';
+        value = 600; // 钻石很值钱
+        weight = 0.5; // 钻石很轻
+        width = 30; height = 30;
+      } else {
+        type = 'mystery';
+        value = Math.random() < 0.5 ? 50 : 800; // 随机价值
+        weight = Math.random() * 3 + 1;
+        width = 40; height = 40;
       }
 
-      newObjects.push({
-        id: Math.random().toString(),
-        x: Math.random() * (CANVAS_WIDTH - 100) + 50,
-        y: Math.random() * (CANVAS_HEIGHT - spawnMinY - 50) + spawnMinY,
+      // 确保物体生成在地下 (Y > MINER_OFFSET_Y)
+      // minSpawnDepthFactor 控制物体生成的最小深度，避免离钩子太近
+      const minY = MINER_OFFSET_Y + (CANVAS_HEIGHT - MINER_OFFSET_Y) * minSpawnDepthFactor;
+      const maxY = CANVAS_HEIGHT - 40;
+      const minX = 40;
+      const maxX = CANVAS_WIDTH - 40;
+
+      objects.push({
+        id: `obj-${i}-${Date.now()}`,
+        x: Math.random() * (maxX - minX) + minX,
+        y: Math.random() * (maxY - minY) + minY,
         width,
         height,
         type,
         value,
         weight
       });
-      console.log("App.tsx - Generated GameObject value:", value);
     }
-    return newObjects;
-  }, [levelConfig]);
+    return objects;
+  }, []);
 
-  // Handle game start transition
-  const handleStartGame = useCallback(() => {
-    const objects = generateLevel();
-    setGameObjects(objects);
+  // 3. 游戏控制函数 (解决 startGame is not defined 的关键)
+  
+  // 开始新游戏
+  const startGame = () => {
+    setScore(0);
+    setLevel(1);
+    setGameTime(INITIAL_LEVEL_CONFIG.timeLimit);
+    setGameObjects(generateLevel(INITIAL_LEVEL_CONFIG));
     setGameState(GameState.PLAYING);
-  }, [generateLevel]);
+  };
 
-  // Handle next level transition
-  const handleNextLevel = useCallback(() => {
-    const nextLevel = level + 1;
-    setLevel(nextLevel);
-    
-    // Manually calculate next level config to avoid useEffect race condition
-    const currentLevelIndex = Math.min(nextLevel - 1, LEVEL_SETTINGS.length - 1);
-    const nextConfig = LEVEL_SETTINGS[currentLevelIndex];
-    setLevelConfig(nextConfig);
-    setGameTime(nextConfig.timeLimit);
-
-    // Generate objects using the new config immediately
-    const objects = generateLevel(nextConfig);
-    setGameObjects(objects);
-    
+  // 进入下一关
+  const nextLevel = () => {
+    setLevel((prev) => prev + 1);
+    setGameTime(INITIAL_LEVEL_CONFIG.timeLimit); // 重置时间
+    // 这里可以增加难度，比如增加目标分数
+    const newConfig = {
+        ...INITIAL_LEVEL_CONFIG,
+        targetScore: INITIAL_LEVEL_CONFIG.targetScore + (level * 200), // 每关目标增加
+        objectCount: Math.min(20, INITIAL_LEVEL_CONFIG.objectCount + level) // 物品变多
+    };
+    setGameObjects(generateLevel(newConfig));
     setGameState(GameState.PLAYING);
-  }, [level, generateLevel]);
+  };
 
-  // Persist assets to localStorage when they change
+  // 重置游戏 (回到菜单)
+  const resetGame = () => {
+    setGameState(GameState.MENU);
+    setScore(0);
+    setLevel(1);
+  };
+
+  // 4. 定时器逻辑
   useEffect(() => {
-    try {
-      localStorage.setItem('cat_miner_assets', JSON.stringify(assets));
-    } catch (e) {
-      console.error("Storage limit reached, cannot save assets", e);
+    let timer: NodeJS.Timeout;
+    if (gameState === GameState.PLAYING && gameTime > 0) {
+      timer = setInterval(() => {
+        setGameTime((prev) => {
+          if (prev <= 1) {
+            // 时间到
+            setGameState(GameState.LEVEL_END);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-  }, [assets]);
-
-  // Level scaling logic
-  useEffect(() => {
-    const currentLevelIndex = Math.min(level - 1, LEVEL_SETTINGS.length - 1);
-    const currentLevelConfig = LEVEL_SETTINGS[currentLevelIndex];
-
-    setLevelConfig(currentLevelConfig);
-    setGameTime(currentLevelConfig.timeLimit);
-  }, [level]);
-
-  // Game Timer
-  useEffect(() => {
-    if (gameState !== GameState.PLAYING) return;
-
-    const timer = setInterval(() => {
-      setGameTime((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setGameState(GameState.LEVEL_END);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
     return () => clearInterval(timer);
-  }, [gameState]);
+  }, [gameState, gameTime]);
 
-  // Generate level objects when game starts or level changes
-  // REMOVED: This effect caused race conditions with empty gameObjects triggering LEVEL_END immediately.
-  // Level generation is now handled explicitly in handleStartGame and handleNextLevel.
-  /*
-  useEffect(() => {
-    if (gameState === GameState.PLAYING) {
-      setGameObjects(generateLevel());
-    }
-  }, [gameState, level, generateLevel]);
-  */
-
-  // ... 前面的 imports 和逻辑保持不变 ...
-
+  // 5. 渲染界面
   return (
-    // 修改外层 div：使用 flex 布局实现全屏居中
-    <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       
-      {/* 游戏标题 (可选) */}
-      <div className="fixed top-4 left-0 w-full text-center pointer-events-none z-0 opacity-50">
-        <h1 className="text-white text-2xl font-bold tracking-widest uppercase">Fuji Cat Miner</h1>
+      {/* 背景装饰 (可选) */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none"></div>
+
+      {/* 标题 */}
+      <div className="fixed top-4 left-0 w-full text-center pointer-events-none z-0">
+        <h1 className="text-white/80 text-3xl font-black tracking-[0.2em] uppercase drop-shadow-lg">
+          Fuji Cat Miner
+        </h1>
       </div>
 
-      {/* 游戏画布容器 */}
-      <div className="relative z-10 w-full max-w-[800px] shadow-2xl shadow-black/50">
+      {/* 游戏主容器 */}
+      <div className="relative z-10 w-full max-w-[800px] flex flex-col items-center">
+        
+        {/* 顶部状态栏 */}
+        <div className="w-full flex justify-between items-center bg-slate-800/80 text-white px-6 py-3 rounded-t-xl border-t-4 border-l-4 border-r-4 border-amber-600 shadow-lg backdrop-blur-sm">
+           <div className="flex flex-col">
+              <span className="text-xs text-amber-400 font-bold uppercase">Score</span>
+              <span className="text-2xl font-mono text-yellow-300 leading-none">{score}</span>
+           </div>
+           
+           <div className="flex flex-col items-center">
+              <div className={`text-3xl font-bold font-mono ${gameTime < 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                {gameTime}
+              </div>
+              <span className="text-[10px] uppercase text-slate-400">Time Left</span>
+           </div>
+
+           <div className="flex flex-col items-end">
+              <span className="text-xs text-amber-400 font-bold uppercase">Target</span>
+              <span className="text-2xl font-mono text-white leading-none">
+                 {/* 简单的目标分数逻辑：基础目标 + 关卡增量 */}
+                 {INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200}
+              </span>
+           </div>
+        </div>
+
+        {/* 游戏画布 Canvas */}
         <GameCanvas
-          assets={assets}
+          assets={DEFAULT_ASSETS}
           gameState={gameState}
           setGameState={setGameState}
           score={score}
           setScore={setScore}
           level={level}
           setLevel={setLevel}
-          levelConfig={levelConfig} // 确保传入的是当前关卡的配置
+          levelConfig={{
+              ...INITIAL_LEVEL_CONFIG,
+              targetScore: INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200
+          }} 
           gameTime={gameTime}
           setGameTime={setGameTime}
           resetGame={resetGame}
           generateLevel={generateLevel}
           gameObjects={gameObjects}
           setGameObjects={setGameObjects}
-          onStartGame={startGame}
-          onNextLevel={nextLevel}
+          onStartGame={startGame} // 这里使用了 startGame
+          onNextLevel={nextLevel} // 这里使用了 nextLevel
         />
-        
-        {/* UI 底部栏 (可选：显示当前分数和关卡) */}
-        <div className="mt-4 flex justify-between text-white font-mono text-lg px-2">
-           <span>Level: {level}</span>
-           <span>Target: {levelConfig.targetScore}</span>
+
+        {/* 底部信息栏 */}
+        <div className="w-full bg-slate-800 text-slate-400 text-xs py-2 px-4 rounded-b-xl border-b-4 border-l-4 border-r-4 border-amber-600 flex justify-between">
+           <span>Level {level}</span>
+           <span>React + Canvas + Vite</span>
         </div>
       </div>
-      
     </div>
   );
-}
+};
 
 export default App;
