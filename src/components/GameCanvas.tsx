@@ -266,7 +266,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
            ctx.drawImage(
              loadedImagesRef.current.miner, 
-             originX + 15 + animOffsetX, 
+             originX + 5 + animOffsetX, 
              MINER_OFFSET_Y - 10 - minerH + animOffsetY, 
              minerW, 
              minerH
