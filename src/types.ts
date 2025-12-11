@@ -12,6 +12,10 @@ export interface GameAssets {
   minerImage?: string;
   hookImage?: string;
   backgroundImage?: string;
+  gold?: string;
+  rock?: string;
+  diamond?: string;
+  mystery?: string;
 }
 
 export interface LevelConfig {
