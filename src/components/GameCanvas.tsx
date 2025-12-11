@@ -269,7 +269,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (loadedImagesRef.current.miner && activeMinerSrc && !activeMinerSrc.toLowerCase().endsWith('.gif')) {
            const minerW = 70;
            const minerH = 70;
-           ctx.drawImage(loadedImagesRef.current.miner, originX + 15, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
+           ctx.drawImage(loadedImagesRef.current.miner, originX + 5, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
         }
 
         // 6. Draw Rope
