@@ -8,7 +8,7 @@ import {
   CANVAS_HEIGHT, 
   MINER_OFFSET_Y 
 } from './constants';
-import { Trophy, ArrowLeft, Play, Crown, Home, RotateCcw } from 'lucide-react'; 
+import { Trophy, ArrowLeft, Play, Crown, Home, RotateCcw, Skull } from 'lucide-react'; 
 
 const App: React.FC = () => {
   // 1. 游戏核心状态
@@ -39,8 +39,11 @@ const App: React.FC = () => {
 
   // 4. 保存分数到排行榜
   const saveScoreToLeaderboard = useCallback(() => {
+    // 必须要有名次且分数大于0才保存（可选：即使0分也保存）
     if (!nickname) return;
     
+    console.log("Saving score:", score, "for player:", nickname); // Debug log
+
     const newRecord: PlayerRecord = {
       name: nickname,
       score: score,
@@ -55,6 +58,7 @@ const App: React.FC = () => {
     localStorage.setItem('miner_cat_leaderboard', JSON.stringify(newLeaderboard));
   }, [score, nickname, leaderboard]);
 
+  // 监听游戏结束，保存分数
   useEffect(() => {
     if (gameState === GameState.GAME_OVER) {
       saveScoreToLeaderboard();
@@ -217,17 +221,8 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* --- 游戏屏幕区域 (修复变形的关键区域) --- */}
-        {/* 1. 外层容器：黑色背景，使用 flex 居中 */}
+        {/* --- 游戏屏幕区域 --- */}
         <div className="relative flex-1 w-full bg-black shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] flex items-center justify-center overflow-hidden">
-            
-            {/* 2. 游戏画面容器：
-                - aspect-[4/3]: 强制保持 4:3 比例
-                - w-full: 尝试占满宽度
-                - h-auto: 高度自动计算
-                - max-w-full & max-h-full: 关键点！防止宽度或高度超出父容器
-                - m-auto: 确保居中
-            */}
             <div className="relative aspect-[4/3] w-full h-auto max-w-full max-h-full m-auto shadow-2xl">
               <GameCanvas
                 assets={DEFAULT_ASSETS}
@@ -238,7 +233,7 @@ const App: React.FC = () => {
                 setGameObjects={setGameObjects}
               />
               
-              {/* UI Overlays (所有菜单界面) */}
+              {/* UI Overlays */}
               
               {/* A. 主菜单 */}
               {gameState === GameState.MENU && (
@@ -333,7 +328,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* D. 关卡结算 */}
+              {/* D. 关卡结算 (LEVEL_END) */}
               {gameState === GameState.LEVEL_END && (
                 <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-sm z-30 p-4">
                   <h2 className="text-3xl md:text-4xl font-bold text-amber-300 mb-4">Level Complete!</h2>
@@ -355,8 +350,12 @@ const App: React.FC = () => {
                       ) : (
                         <div className="flex flex-col items-center w-full gap-3">
                            <p className="text-red-400 mb-2 font-bold">Target not reached!</p>
-                           <button onClick={resetGame} className="w-full px-6 py-3 bg-slate-600 hover:bg-slate-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(71,85,105)] hover:shadow-[0_2px_0_rgb(71,85,105)] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
-                             <RotateCcw size={20} /> Try Again
+                           {/* 核心修改：失败时不再直接 Reset，而是进入 GAME_OVER 从而触发分数保存 */}
+                           <button 
+                              onClick={() => setGameState(GameState.GAME_OVER)} 
+                              className="w-full px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(153,27,27)] hover:shadow-[0_2px_0_rgb(153,27,27)] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2"
+                           >
+                             <Skull size={20} /> Finish Game
                            </button>
                         </div>
                       )}
@@ -364,7 +363,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* E. 游戏结束 */}
+              {/* E. 游戏结束 (GAME_OVER) */}
               {gameState === GameState.GAME_OVER && (
                  <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white backdrop-blur-md z-30 p-4">
                     <h2 className="text-4xl md:text-5xl font-black text-red-500 mb-2">GAME OVER</h2>
