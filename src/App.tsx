@@ -8,7 +8,7 @@ import {
   CANVAS_HEIGHT, 
   MINER_OFFSET_Y 
 } from './constants';
-import { Trophy, ArrowLeft, Save, Play, Crown } from 'lucide-react'; // 假设你安装了 lucide-react，如果没有，可以用文字代替
+import { Trophy, ArrowLeft, Play, Crown, Home, RotateCcw } from 'lucide-react'; 
 
 const App: React.FC = () => {
   // 1. 游戏核心状态
@@ -33,7 +33,6 @@ const App: React.FC = () => {
         console.error('Failed to parse leaderboard', e);
       }
     }
-    // 尝试读取上次使用的昵称
     const savedName = localStorage.getItem('miner_cat_last_name');
     if (savedName) setTempNickname(savedName);
   }, []);
@@ -49,14 +48,13 @@ const App: React.FC = () => {
     };
 
     const newLeaderboard = [...leaderboard, newRecord]
-      .sort((a, b) => b.score - a.score) // 降序排列
-      .slice(0, 10); // 只保留前10名
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
 
     setLeaderboard(newLeaderboard);
     localStorage.setItem('miner_cat_leaderboard', JSON.stringify(newLeaderboard));
   }, [score, nickname, leaderboard]);
 
-  // 监听游戏结束，保存分数
   useEffect(() => {
     if (gameState === GameState.GAME_OVER) {
       saveScoreToLeaderboard();
@@ -119,7 +117,6 @@ const App: React.FC = () => {
 
   // 6. 游戏流程控制
   const handleStartClick = () => {
-    // 如果没有昵称，先去输入昵称界面
     if (!nickname) {
       setGameState(GameState.INPUT_NAME);
     } else {
@@ -129,7 +126,7 @@ const App: React.FC = () => {
 
   const submitNickname = () => {
     if (!tempNickname.trim()) return;
-    const name = tempNickname.trim().substring(0, 8); // 限制长度
+    const name = tempNickname.trim().substring(0, 8);
     setNickname(name);
     localStorage.setItem('miner_cat_last_name', name);
     initGame();
@@ -161,7 +158,6 @@ const App: React.FC = () => {
     setLevel(1);
   };
 
-  // 定时器
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (gameState === GameState.PLAYING && gameTime > 0) {
@@ -181,7 +177,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-zinc-900 flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
-      {/* 背景装饰 */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       </div>
@@ -224,7 +219,6 @@ const App: React.FC = () => {
 
         {/* --- 游戏屏幕区域 --- */}
         <div className="relative w-full aspect-[4/3] bg-black shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
-            {/* 1. Canvas 始终渲染 (提供背景) */}
             <GameCanvas
               assets={DEFAULT_ASSETS}
               gameState={gameState}
@@ -234,28 +228,31 @@ const App: React.FC = () => {
               setGameObjects={setGameObjects}
             />
             
-            {/* 2. UI Overlays (所有菜单界面) */}
-            
-            {/* A. 主菜单 (MENU) */}
+            {/* A. 主菜单 */}
             {gameState === GameState.MENU && (
               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-sm z-30">
                 <h1 className="text-6xl font-black text-amber-400 mb-2 drop-shadow-md">矿工猫</h1>
-                <p className="text-xl mb-8 text-slate-300">Dig for treasures under Mount Fuji</p>
+                <p className="text-xl mb-8 text-slate-300">Dig for treasures under Mount Fuji!</p>
                 
                 <div className="flex flex-col gap-4 w-64">
-                  <button onClick={handleStartClick}
-                    className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(21,128,61)] hover:shadow-[0_2px_0_rgb(21,128,61)] hover:translate-y-[2px] transition-all">
+                  <button 
+                    onClick={handleStartClick}
+                    className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(21,128,61)] hover:shadow-[0_2px_0_rgb(21,128,61)] hover:translate-y-[2px] transition-all"
+                  >
                     <Play size={24} fill="currentColor" /> Start Game
                   </button>
-                  <button onClick={() => setGameState(GameState.LEADERBOARD)}
-                    className="flex items-center justify-center gap-2 px-6 py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(180,83,9)] hover:shadow-[0_2px_0_rgb(180,83,9)] hover:translate-y-[2px] transition-all">
+
+                  <button 
+                    onClick={() => setGameState(GameState.LEADERBOARD)}
+                    className="flex items-center justify-center gap-2 px-6 py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(180,83,9)] hover:shadow-[0_2px_0_rgb(180,83,9)] hover:translate-y-[2px] transition-all"
+                  >
                     <Trophy size={24} /> Leaderboard
                   </button>
                 </div>
               </div>
             )}
 
-            {/* B. 输入昵称 (INPUT_NAME) */}
+            {/* B. 输入昵称 */}
             {gameState === GameState.INPUT_NAME && (
               <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-md z-30">
                 <div className="bg-slate-800 p-8 rounded-2xl border-4 border-slate-600 shadow-2xl text-center max-w-sm w-full">
@@ -277,7 +274,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* C. 排行榜 (LEADERBOARD) */}
+            {/* C. 排行榜 */}
             {gameState === GameState.LEADERBOARD && (
               <div className="absolute inset-0 bg-slate-900 z-30 flex flex-col">
                 <div className="p-6 flex items-center justify-between bg-slate-800 border-b border-slate-700">
@@ -287,7 +284,7 @@ const App: React.FC = () => {
                   <h2 className="text-2xl font-black text-amber-500 flex items-center gap-2">
                     <Trophy size={24} className="text-amber-400" /> HALL OF FAME
                   </h2>
-                  <div className="w-16"></div> {/* Spacer */}
+                  <div className="w-16"></div>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4">
@@ -332,18 +329,28 @@ const App: React.FC = () => {
                    <p className="text-slate-400 text-sm uppercase mb-1">Total Score</p>
                    <p className="text-4xl font-mono text-white">{score}</p>
                 </div>
-                {score >= INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200 ? (
-                   <button onClick={nextLevel} className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition-all">
-                     Next Level
-                   </button>
-                ) : (
-                  <div className="flex flex-col items-center">
-                     <p className="text-red-400 mb-4 font-bold">Target not reached!</p>
-                     <button onClick={resetGame} className="px-8 py-3 bg-slate-600 hover:bg-slate-500 rounded-xl font-bold text-xl">
-                       Main Menu
-                     </button>
-                  </div>
-                )}
+                
+                {/* 结算按钮组 */}
+                <div className="flex flex-col gap-3 w-64">
+                    {score >= INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200 ? (
+                       <>
+                         <button onClick={nextLevel} className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(37,99,235)] hover:shadow-[0_2px_0_rgb(37,99,235)] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
+                           Next Level <Play size={20} fill="currentColor"/>
+                         </button>
+                         {/* 新增：返回主菜单按钮 */}
+                         <button onClick={resetGame} className="w-full px-6 py-3 bg-slate-600 hover:bg-slate-500 rounded-xl font-bold text-lg shadow-[0_4px_0_rgb(71,85,105)] hover:shadow-[0_2px_0_rgb(71,85,105)] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
+                           <Home size={20} /> Main Menu
+                         </button>
+                       </>
+                    ) : (
+                      <div className="flex flex-col items-center w-full">
+                         <p className="text-red-400 mb-4 font-bold">Target not reached!</p>
+                         <button onClick={resetGame} className="w-full px-6 py-3 bg-slate-600 hover:bg-slate-500 rounded-xl font-bold text-xl shadow-[0_4px_0_rgb(71,85,105)] hover:shadow-[0_2px_0_rgb(71,85,105)] hover:translate-y-[2px] transition-all flex items-center justify-center gap-2">
+                           <RotateCcw size={20} /> Try Again
+                         </button>
+                      </div>
+                    )}
+                </div>
               </div>
             )}
 
@@ -359,7 +366,7 @@ const App: React.FC = () => {
                   </div>
                   
                   <div className="flex gap-4">
-                     <button onClick={resetGame} className="px-8 py-3 bg-white text-black hover:bg-gray-200 rounded-full font-bold text-xl">
+                     <button onClick={resetGame} className="px-8 py-3 bg-white text-black hover:bg-gray-200 rounded-full font-bold text-xl shadow-lg hover:scale-105 transition-all">
                        Back to Menu
                      </button>
                   </div>
@@ -372,13 +379,19 @@ const App: React.FC = () => {
 
         {/* --- 底部控制栏 --- */}
         <div className="bg-slate-800 px-6 py-3 flex justify-between items-center border-t-4 border-slate-700">
+           {/* 左侧：玩家名字 (如果有) */}
            <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-              {nickname ? (
-                <span className="text-slate-400 font-bold uppercase tracking-widest text-sm">Player: {nickname}</span>
-              ) : (
-                <span className="text-slate-400 font-bold uppercase tracking-widest text-sm">Level {level}</span>
-              )}
+              <span className="text-slate-400 font-bold uppercase tracking-widest text-sm">
+                 {nickname ? `PLAYER: ${nickname}` : 'READY'}
+              </span>
+           </div>
+           
+           {/* 右侧：显示当前 Level (新增功能) */}
+           <div className="flex items-center gap-2">
+               <span className="text-amber-500 font-bold uppercase tracking-widest font-mono text-sm border border-amber-500/30 px-2 py-0.5 rounded bg-amber-900/20">
+                 LEVEL {level}
+               </span>
            </div>
         </div>
 
