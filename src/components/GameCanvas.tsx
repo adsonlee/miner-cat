@@ -55,8 +55,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Game Logic State (使用 Refs 以获得更好的动画性能)
-  // 核心修复：初始角度为 0 (垂直向下)，不再是 PI/2
+  // Game Logic State
   const hookAngleRef = useRef(0);
   const hookDirectionRef = useRef(1); // 1 (向右) or -1 (向左)
   const hookStateRef = useRef<HookState>(HookState.IDLE);
@@ -66,15 +65,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const loadedImagesRef = useRef<Record<string, HTMLImageElement>>({});
   const setScoreRef = useRef(setScore);
   
-  // Track the actual source used for miner (in case of fallback)
   const [activeMinerSrc, setActiveMinerSrc] = useState<string>(assets.minerImage || REMOTE_ASSETS.minerImage);
 
-  // 更新 ref 以便在闭包中使用最新的 setScore
   useEffect(() => {
     setScoreRef.current = setScore;
   }, [setScore]);
 
-  // 当 assets 变化时更新 minerSrc
   useEffect(() => {
     if (assets.minerImage) {
       setActiveMinerSrc(assets.minerImage);
@@ -85,23 +81,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     if (gameState === GameState.PLAYING) {
       hookLengthRef.current = 30;
-      hookAngleRef.current = 0; // 重置为垂直向下
+      hookAngleRef.current = 0;
       hookStateRef.current = HookState.IDLE;
       caughtObjectRef.current = null;
     }
   }, [gameState]);
 
-  // Check for level completion when gameObjects change
+  // Check for level completion
   useEffect(() => {
     if (gameState === GameState.PLAYING && gameObjects.length === 0) {
       setGameState(GameState.LEVEL_END);
     }
   }, [gameState, gameObjects.length, setGameState]);
 
-  // Load Images with Fallback
+  // Load Images
   useEffect(() => {
-    // 映射 assets key 到 image key
-    // 核心修复：优先使用传入的 assets (本地图片)，其次才是 REMOTE_ASSETS
     const imageMap = {
       miner: assets.minerImage || REMOTE_ASSETS.minerImage,
       hook: assets.hookImage || REMOTE_ASSETS.hookImage,
@@ -117,7 +111,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const img = new Image();
       
       img.onerror = () => {
-        // Fallback logic
         const remoteSrc = (REMOTE_ASSETS as any)[key === 'miner' ? 'minerImage' : key === 'hook' ? 'hookImage' : key === 'background' ? 'backgroundImage' : key];
         if (src !== remoteSrc && remoteSrc) {
            console.warn(`Failed to load asset: ${key}. Falling back to remote.`);
@@ -127,7 +120,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       };
 
       img.onload = () => {
-        // Special processing for miner image (简单的透明度处理，去除白底)
         if (key === 'miner') {
           try {
             const canvas = document.createElement('canvas');
@@ -171,8 +163,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // 2. Draw Background
       if (loadedImagesRef.current.background) {
         ctx.drawImage(loadedImagesRef.current.background, 
-          0, 0, loadedImagesRef.current.background.width, loadedImagesRef.current.background.height, // Source
-          0, 0, CANVAS_WIDTH, MINER_OFFSET_Y // Dest
+          0, 0, loadedImagesRef.current.background.width, loadedImagesRef.current.background.height, 
+          0, 0, CANVAS_WIDTH, MINER_OFFSET_Y 
         );
       } else {
         ctx.fillStyle = '#87CEEB';
@@ -190,34 +182,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (gameState === GameState.PLAYING) {
         // Hook Logic
         const originX = CANVAS_WIDTH / 2;
-        const originY = MINER_OFFSET_Y - 20;
+        const originY = MINER_OFFSET_Y - 25; // 稍微抬高一点，给三脚架留空间
         
-        // 核心修复：统一使用弧度计算
-        // 0 度 = 垂直向下
         const rad = hookAngleRef.current * Math.PI / 180;
 
-        // Swing
+        // Logic Update
         if (hookStateRef.current === HookState.IDLE) {
           hookAngleRef.current += ROTATION_SPEED * hookDirectionRef.current;
-          // 限制角度在 -70 到 70 之间
           if (hookAngleRef.current > MAX_ANGLE || hookAngleRef.current < MIN_ANGLE) {
             hookDirectionRef.current *= -1;
           }
-        } 
-        // Extend
-        else if (hookStateRef.current === HookState.EXTENDING) {
+        } else if (hookStateRef.current === HookState.EXTENDING) {
           hookLengthRef.current += HOOK_SPEED_EXTEND;
-          
-          // 核心修复：使用 sin 计算 X (左右)，cos 计算 Y (上下)
           const tipX = originX + Math.sin(rad) * hookLengthRef.current;
           const tipY = originY + Math.cos(rad) * hookLengthRef.current;
           
-          // Hit Bounds
           if (tipX < 0 || tipX > CANVAS_WIDTH || tipY > CANVAS_HEIGHT) {
             hookStateRef.current = HookState.RETRIEVING;
           }
-
-          // Collision Detection
           for (let i = 0; i < gameObjects.length; i++) {
             const obj = gameObjects[i];
             if (
@@ -232,16 +214,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               break;
             }
           }
-        } 
-        // Retrieve
-        else if (hookStateRef.current === HookState.RETRIEVING) {
+        } else if (hookStateRef.current === HookState.RETRIEVING) {
           let speed = HOOK_SPEED_RETRIEVE_BASE;
           if (caughtObjectRef.current) {
             const weight = caughtObjectRef.current.weight || 1; 
             speed = Math.max(1, HOOK_SPEED_RETRIEVE_BASE / weight);
           }
           hookLengthRef.current -= speed;
-
           if (hookLengthRef.current <= 30) {
             hookLengthRef.current = 30;
             hookStateRef.current = HookState.IDLE;
@@ -253,30 +232,76 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }
 
-        // --- DRAWING ---
+        // --- DRAWING LAYERS ---
 
-        // Draw Miner
+        // 4. Draw Machinery (Tripod) - Behind everything
+        ctx.strokeStyle = '#2d3748'; // 深灰色金属
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        // 左腿
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX - 15, MINER_OFFSET_Y);
+        // 右腿
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX + 15, MINER_OFFSET_Y);
+        ctx.stroke();
+
+        // 5. Draw Miner (Cat) - Draw BEFORE rope/wheel so it looks like he's behind/operating it
         if (loadedImagesRef.current.miner && activeMinerSrc && !activeMinerSrc.toLowerCase().endsWith('.gif')) {
            const minerW = 70;
            const minerH = 70;
-           ctx.drawImage(loadedImagesRef.current.miner, originX + 20, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
+           // 调整位置：让猫在机器右边，稍微重叠一点，像是在摇把手
+           ctx.drawImage(loadedImagesRef.current.miner, originX + 15, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
         }
 
-        // Draw Rope (使用修正后的公式)
+        // 6. Draw Rope
         const hookTipX = originX + Math.sin(rad) * hookLengthRef.current;
         const hookTipY = originY + Math.cos(rad) * hookLengthRef.current;
 
         ctx.beginPath();
         ctx.moveTo(originX, originY);
         ctx.lineTo(hookTipX, hookTipY);
-        ctx.strokeStyle = '#3e2723';
+        ctx.strokeStyle = '#3e2723'; // 绳子颜色
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw Hook
+        // 7. Draw Rotating Wheel (Pulley) - On top of rope connection
+        ctx.save();
+        ctx.translate(originX, originY);
+        // 计算旋转：根据绳子长度旋转，模拟卷绳效果
+        // 长度每变化 10 像素，旋转 1 弧度
+        const wheelRotation = (hookLengthRef.current - 30) * 0.15; 
+        ctx.rotate(wheelRotation);
+
+        // 滚轮本体
+        ctx.fillStyle = '#718096'; // 灰色轮子
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1a202c'; // 轮子边框
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 轮子内部的十字叉 (显示旋转)
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
+        ctx.moveTo(0, -10); ctx.lineTo(0, 10);
+        ctx.strokeStyle = '#cbd5e0';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // 中心轴
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#2d3748';
+        ctx.fill();
+
+        ctx.restore();
+
+        // 8. Draw Hook (Claw)
         ctx.save();
         ctx.translate(hookTipX, hookTipY);
-        // 旋转图片以匹配绳子角度
         ctx.rotate(rad);
         if (loadedImagesRef.current.hook) {
           ctx.drawImage(loadedImagesRef.current.hook, -15, -15, 30, 30);
@@ -285,18 +310,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.fillRect(-10, -10, 20, 20);
         }
         
-        // Draw Caught Object
+        // 9. Draw Caught Object
         if (caughtObjectRef.current) {
           const obj = caughtObjectRef.current;
           const img = loadedImagesRef.current[obj.type];
           if (img) {
-             // 简单的旋转抵消，让物品看起来是挂在钩子上的
              ctx.drawImage(img, -obj.width/2, 5, obj.width, obj.height);
           }
         }
         ctx.restore();
 
-        // Draw Soil Objects
+        // 10. Draw Soil Objects
         gameObjects.forEach(obj => {
           const img = loadedImagesRef.current[obj.type];
           if (img) {
@@ -325,19 +349,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
-
   return (
     <div className="relative w-full h-full overflow-hidden bg-transparent">
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        className="w-full h-full block touch-none cursor-crosshair" // 保持 block 避免 canvas 底部白边
+        className="w-full h-full block touch-none cursor-crosshair"
         onMouseDown={handleAction}
         onTouchStart={(e) => { e.preventDefault(); handleAction(); }}
       />
-      
-      {/* ... 下面的 GIF, MENU, GAME_OVER 代码保持不变 ... */}
       
       {/* GIF Overlay */}
       {activeMinerSrc && activeMinerSrc.toLowerCase().endsWith('.gif') && gameState === GameState.PLAYING && (
@@ -346,8 +367,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           alt="Miner Animation"
           style={{
             position: 'absolute',
-            left: '52.5%', 
-            top: '16.66%', 
+            left: '51%', // 稍微向右移一点，适配新画的三脚架
+            top: '16%', 
             width: '8.75%', 
             height: 'auto', 
             pointerEvents: 'none', 
