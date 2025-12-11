@@ -181,7 +181,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillRect(0, MINER_OFFSET_Y, CANVAS_WIDTH, CANVAS_HEIGHT - MINER_OFFSET_Y);
       
       // Draw Grass Line
-      ctx.fillStyle = '#4CAF50';
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, MINER_OFFSET_Y - 10, CANVAS_WIDTH, 10);
 
       if (gameState === GameState.PLAYING) {
