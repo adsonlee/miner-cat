@@ -22,9 +22,10 @@ export const HOOK_SPEED_RETRIEVE_BASE = 5;
 // 注意：这里的路径是相对于构建后的根目录的
 // Vite 会把 public/assets 里的东西放在 dist/assets 下
 // 使用 './assets/' 可以在 GitHub Pages (子路径) 上正常工作
-const REPO_BASE = '/miner-cat/public';
+const REPO_BASE = '/miner-cat'; 
 
-const LOCAL_PATH = '${REPO_BASE}/assets';
+// 2. 拼接完整的绝对路径
+const LOCAL_PATH = `${REPO_BASE}/assets`;
 
 const BASE_ASSETS = {
   ropeColor: '#8B4513',
