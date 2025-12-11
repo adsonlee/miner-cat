@@ -240,7 +240,7 @@ const App: React.FC = () => {
             {gameState === GameState.MENU && (
               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-sm z-30">
                 <h1 className="text-6xl font-black text-amber-400 mb-2 drop-shadow-md">矿工猫</h1>
-                <p className="text-xl mb-8 text-slate-300">Dig for treasures under Mount Fuji!</p>
+                <p className="text-xl mb-8 text-slate-300">Dig for treasures under Mount Fuji</p>
                 
                 <div className="flex flex-col gap-4 w-64">
                   <button onClick={handleStartClick}
