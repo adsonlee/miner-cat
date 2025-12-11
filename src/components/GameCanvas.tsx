@@ -124,7 +124,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 // 核心修复：放宽阈值 (从 240 改为 200)
                 // 只要 RGB 都大于 200 (浅灰色到白色区间) 就认为是背景并变透明
                 // ==================================================================
-                if (r > 205 && g > 205 && b > 205) {
+                if (r > 211 && g > 211 && b > 220) {
                   data[i + 3] = 0;
                 }
               }
@@ -270,8 +270,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
            ctx.drawImage(
              loadedImagesRef.current.miner, 
-             originX - 1 + animOffsetX, 
-             MINER_OFFSET_Y - 12 - minerH + animOffsetY, 
+             originX - 2 + animOffsetX, 
+             MINER_OFFSET_Y + 1 - minerH + animOffsetY, 
              minerW, 
              minerH
            );
