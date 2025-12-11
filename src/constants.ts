@@ -19,7 +19,7 @@ import mysteryImg from './assets/mystery.png';
 // 游戏画布与布局
 // -----------------------------
 export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 600;
+export const CANVAS_HEIGHT = 1200;
 export const MINER_OFFSET_Y = 180;
 
 // -----------------------------
