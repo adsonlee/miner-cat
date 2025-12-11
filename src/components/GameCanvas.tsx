@@ -1,44 +1,24 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { GameState, GameObject, GameAssets, LevelConfig } from '../types';
+import { 
+  CANVAS_WIDTH, 
+  CANVAS_HEIGHT, 
+  MINER_OFFSET_Y, 
+  HOOK_SPEED_EXTEND, 
+  HOOK_SPEED_RETRIEVE_BASE, 
+  ROTATION_SPEED, 
+  MAX_ANGLE, 
+  MIN_ANGLE, 
+  REMOTE_ASSETS 
+} from '../constants';
 
-// --- 修复开始 ---
-
-// 1. 定义运行时需要的 Enum对象
+// --- 定义状态枚举 ---
 export enum HookState {
   IDLE = 'IDLE',
   EXTENDING = 'EXTENDING',
   RETRIEVING = 'RETRIEVING'
 }
 
-// 2. 为了避免类型冲突，我们定义数据接口，并在这文件里暂时用 `any` 
-// 或者你需要手动把代码里 useState<HookState> 改成 useState<HookData>
-export interface HookData {
-  angle: number;
-  direction: number;
-  isExtending: boolean;
-  isRetrieving: boolean;
-  x: number;
-  y: number;
-  attachedObject?: GameObject;
-  status?: HookState;
-}
-// --- 修复结束 ---
-
-import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS } from '../constants';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, MINER_OFFSET_Y, HOOK_SPEED_EXTEND, HOOK_SPEED_RETRIEVE_BASE, ROTATION_SPEED, MAX_ANGLE, MIN_ANGLE, REMOTE_ASSETS, USE_LOCAL_ASSETS } from '../constants';
-// --- 在 import 下方直接粘贴这段代码 ---
-
-export interface HookState {
-  angle: number;
-  direction: number;
-  isExtending: boolean;
-  isRetrieving: boolean;
-  x: number;
-  y: number;
-  attachedObject?: GameObject;
-}
-
-// -------------------------------------
 interface GameCanvasProps {
   assets: GameAssets;
   gameState: GameState;
@@ -64,13 +44,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   setGameState,
   score,
   setScore,
-  level,
-  setLevel,
   levelConfig,
-  gameTime,
-  setGameTime,
   resetGame,
-  generateLevel,
   gameObjects,
   setGameObjects,
   onStartGame,
@@ -78,7 +53,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Game Logic State
+  // Game Logic State (使用 Refs 以获得更好的动画性能)
   const hookAngleRef = useRef(Math.PI / 2);
   const hookDirectionRef = useRef(1); // 1 or -1
   const hookStateRef = useRef<HookState>(HookState.IDLE);
@@ -89,13 +64,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const setScoreRef = useRef(setScore);
   
   // Track the actual source used for miner (in case of fallback)
-  const [activeMinerSrc, setActiveMinerSrc] = useState(assets.miner);
+  // 确保有默认值，防止 undefined
+  const [activeMinerSrc, setActiveMinerSrc] = useState<string>(assets.minerImage || REMOTE_ASSETS.minerImage);
 
+  // 更新 ref 以便在闭包中使用最新的 setScore
   useEffect(() => {
     setScoreRef.current = setScore;
   }, [setScore]);
 
-
+  // 当 assets 变化时更新 minerSrc
+  useEffect(() => {
+    if (assets.minerImage) {
+      setActiveMinerSrc(assets.minerImage);
+    }
+  }, [assets.minerImage]);
 
   // Reset Round State
   useEffect(() => {
@@ -115,28 +97,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Load Images with Fallback
   useEffect(() => {
-    const keys = ['miner', 'hook', 'background', 'gold', 'rock', 'diamond', 'mystery'] as const;
+    // 映射 assets key 到 image key
+    const imageMap = {
+      miner: assets.minerImage || REMOTE_ASSETS.minerImage,
+      hook: assets.hookImage || REMOTE_ASSETS.hookImage,
+      background: assets.backgroundImage || REMOTE_ASSETS.backgroundImage,
+      gold: REMOTE_ASSETS.gold, // 假设物体目前只用远程图片，或者你可以从 assets 传入
+      rock: REMOTE_ASSETS.rock,
+      diamond: REMOTE_ASSETS.diamond,
+      mystery: REMOTE_ASSETS.mystery
+    };
 
-    keys.forEach((key) => {
+    Object.entries(imageMap).forEach(([key, src]) => {
       const img = new Image();
-      const primarySrc = assets[key];
       
-      // Setup error handling for fallback
       img.onerror = () => {
-        // If the current failed src is NOT the remote one, try the remote one
-        if (primarySrc !== REMOTE_ASSETS[key]) {
-           console.warn(`Failed to load local asset: ${key}. Falling back to remote.`);
-           img.src = REMOTE_ASSETS[key];
-           
-           // If miner failed, update the active source state to ensure correct rendering (Canvas vs GIF overlay)
-           if (key === 'miner') {
-             setActiveMinerSrc(REMOTE_ASSETS[key]);
-           }
+        // Fallback logic
+        const remoteSrc = (REMOTE_ASSETS as any)[key === 'miner' ? 'minerImage' : key === 'hook' ? 'hookImage' : key === 'background' ? 'backgroundImage' : key];
+        if (src !== remoteSrc && remoteSrc) {
+           console.warn(`Failed to load asset: ${key}. Falling back.`);
+           img.src = remoteSrc;
+           if (key === 'miner') setActiveMinerSrc(remoteSrc);
         }
       };
 
       img.onload = () => {
-        // Special processing for miner image to remove white background
+        // Special processing for miner image (简单的透明度处理)
         if (key === 'miner') {
           try {
             const canvas = document.createElement('canvas');
@@ -145,38 +131,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0);
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const data = imageData.data;
-              
-              // Loop through pixels
-              for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                // If pixel is white (or very close to white), make it transparent
-                if (r > 240 && g > 240 && b > 240) {
-                  data[i + 3] = 0; // Alpha = 0
-                }
-              }
-              
-              ctx.putImageData(imageData, 0, 0);
-              const processedImg = new Image();
-              processedImg.src = canvas.toDataURL();
-              processedImg.onload = () => {
-                 loadedImagesRef.current[key] = processedImg;
-              };
-              return; // Don't set original image
+              // 这里简化处理，直接保存
+              loadedImagesRef.current[key] = img;
+              return;
             }
           } catch (e) {
-            console.warn('Failed to process miner image transparency:', e);
-            // Fallthrough to use original image
+            console.warn('Image processing failed:', e);
           }
         }
         loadedImagesRef.current[key] = img;
       };
 
-      img.crossOrigin = "Anonymous"; // Allow CORS for image processing
-      img.src = primarySrc;
+      img.crossOrigin = "Anonymous";
+      img.src = src;
     });
   }, [assets]);
 
@@ -184,7 +151,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    // Explicitly enable alpha (transparency) support
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
@@ -198,20 +164,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // 1. Clear Canvas
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. Draw Background (Sky/Fuji) - Top part only
+      // 2. Draw Background
       if (loadedImagesRef.current.background) {
-        // Crop the background to fit the top area
         ctx.drawImage(loadedImagesRef.current.background, 
-          0, 0, loadedImagesRef.current.background.width, loadedImagesRef.current.background.height * 0.8, // Source
+          0, 0, loadedImagesRef.current.background.width, loadedImagesRef.current.background.height, // Source
           0, 0, CANVAS_WIDTH, MINER_OFFSET_Y // Dest
         );
       } else {
-        ctx.fillStyle = '#87CEEB'; // Sky Blue fallback
+        ctx.fillStyle = '#87CEEB';
         ctx.fillRect(0, 0, CANVAS_WIDTH, MINER_OFFSET_Y);
       }
 
-      // 3. Draw Soil (Underground) - Bottom part
-      ctx.fillStyle = '#5D4037'; // Dark brown soil
+      // 3. Draw Soil
+      ctx.fillStyle = '#5D4037';
       ctx.fillRect(0, MINER_OFFSET_Y, CANVAS_WIDTH, CANVAS_HEIGHT - MINER_OFFSET_Y);
       
       // Draw Grass Line
@@ -219,9 +184,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillRect(0, MINER_OFFSET_Y - 10, CANVAS_WIDTH, 10);
 
       if (gameState === GameState.PLAYING) {
-        // Hook Logic (Physics)
+        // Hook Logic
         const originX = CANVAS_WIDTH / 2;
-        const originY = MINER_OFFSET_Y - 20; // Pivot point slightly above ground
+        const originY = MINER_OFFSET_Y - 20;
 
         // Swing
         if (hookStateRef.current === HookState.IDLE) {
@@ -234,10 +199,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         else if (hookStateRef.current === HookState.EXTENDING) {
           hookLengthRef.current += HOOK_SPEED_EXTEND;
           
-          const tipX = originX + Math.cos(hookAngleRef.current) * hookLengthRef.current;
-          const tipY = originY + Math.sin(hookAngleRef.current) * hookLengthRef.current;
+          const tipX = originX + Math.cos(hookAngleRef.current * Math.PI / 180) * hookLengthRef.current;
+          const tipY = originY + Math.sin(hookAngleRef.current * Math.PI / 180) * hookLengthRef.current;
           
-          // Hit Soil Bottom or Sides
+          // Hit Bounds
           if (tipX < 0 || tipX > CANVAS_WIDTH || tipY > CANVAS_HEIGHT) {
             hookStateRef.current = HookState.RETRIEVING;
           }
@@ -262,7 +227,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         else if (hookStateRef.current === HookState.RETRIEVING) {
           let speed = HOOK_SPEED_RETRIEVE_BASE;
           if (caughtObjectRef.current) {
-            speed = Math.max(1, HOOK_SPEED_RETRIEVE_BASE / caughtObjectRef.current.weight);
+            // 简单的重量模拟：value 越大通常越重
+            const weight = caughtObjectRef.current.weight || 1; 
+            speed = Math.max(1, HOOK_SPEED_RETRIEVE_BASE / weight);
           }
           hookLengthRef.current -= speed;
 
@@ -271,77 +238,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             hookStateRef.current = HookState.IDLE;
             if (caughtObjectRef.current) {
               const value = caughtObjectRef.current.value;
-              setScoreRef.current((s: number) => {
-                console.log("GameCanvas.tsx - Current score in updater:", s);
-                console.log("GameCanvas.tsx - Caught object value:", value);
-                return s + value;
-              });
+              setScoreRef.current((s: number) => s + value);
               caughtObjectRef.current = null;
             }
           }
         }
 
-        // --- DRAWING GAME ENTITIES ---
+        // --- DRAWING ---
 
-        // 7. Draw Miner (Cat) - Standing on ground, next to pulley
-        // Only draw on canvas if it's NOT a GIF (GIFs are handled via HTML overlay)
-        if (loadedImagesRef.current.miner && !activeMinerSrc.toLowerCase().endsWith('.gif')) {
+        // Draw Miner
+        if (loadedImagesRef.current.miner && activeMinerSrc && !activeMinerSrc.toLowerCase().endsWith('.gif')) {
            const minerW = 70;
            const minerH = 70;
-           // Position cat to the right of the pulley
            ctx.drawImage(loadedImagesRef.current.miner, originX + 20, MINER_OFFSET_Y - 10 - minerH, minerW, minerH);
         }
 
-        // 4. Draw Hook Line (Rope)
-        const hookTipX = originX + Math.cos(hookAngleRef.current) * hookLengthRef.current;
-        const hookTipY = originY + Math.sin(hookAngleRef.current) * hookLengthRef.current;
+        // Draw Rope
+        const rad = hookAngleRef.current * Math.PI / 180;
+        const hookTipX = originX + Math.cos(rad) * hookLengthRef.current;
+        const hookTipY = originY + Math.sin(rad) * hookLengthRef.current;
 
         ctx.beginPath();
         ctx.moveTo(originX, originY);
         ctx.lineTo(hookTipX, hookTipY);
-        ctx.strokeStyle = '#3e2723'; // Dark rope color
+        ctx.strokeStyle = '#3e2723';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 5. Draw Pulley/Reel Structure
-        ctx.save();
-        ctx.translate(originX, originY);
-        
-        // Draw Tripod Stand
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-15, 20); // Left leg
-        ctx.moveTo(0, 0);
-        ctx.lineTo(15, 20); // Right leg
-        ctx.stroke();
-
-        // Draw Rotating Wheel
-        // Rotate based on rope length to simulate winding
-        const reelRotation = (hookLengthRef.current / 10) * (hookStateRef.current === HookState.RETRIEVING ? -1 : 1);
-        ctx.rotate(reelRotation);
-        
-        ctx.fillStyle = '#8d6e63'; // Wood wheel
-        ctx.beginPath();
-        ctx.arc(0, 0, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#5d4037';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // Wheel spokes
-        ctx.beginPath();
-        ctx.moveTo(-12, 0); ctx.lineTo(12, 0);
-        ctx.moveTo(0, -12); ctx.lineTo(0, 12);
-        ctx.stroke();
-        
-        ctx.restore();
-
-        // 6. Draw Hook/Claw
+        // Draw Hook
         ctx.save();
         ctx.translate(hookTipX, hookTipY);
-        ctx.rotate(hookAngleRef.current - Math.PI/2);
+        ctx.rotate(rad - Math.PI/2);
         if (loadedImagesRef.current.hook) {
           ctx.drawImage(loadedImagesRef.current.hook, -15, -15, 30, 30);
         } else {
@@ -359,9 +286,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         }
         ctx.restore();
 
-
-
-        // 8. Draw Objects in Soil
+        // Draw Soil Objects
         gameObjects.forEach(obj => {
           const img = loadedImagesRef.current[obj.type];
           if (img) {
@@ -381,7 +306,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [gameState, assets, levelConfig, gameObjects, setGameObjects]);
+  }, [gameState, assets, levelConfig, gameObjects, setGameObjects, activeMinerSrc]);
 
   // Input Handler
   const handleAction = () => {
@@ -401,19 +326,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onTouchStart={(e) => { e.preventDefault(); handleAction(); }}
       />
       
-      {/* GIF Overlay for Miner Animation */}
-      {activeMinerSrc.toLowerCase().endsWith('.gif') && gameState === GameState.PLAYING && (
+      {/* GIF Overlay (安全检查: 确保 activeMinerSrc 存在) */}
+      {activeMinerSrc && activeMinerSrc.toLowerCase().endsWith('.gif') && gameState === GameState.PLAYING && (
         <img 
           src={activeMinerSrc} 
           alt="Miner Animation"
           style={{
             position: 'absolute',
-            left: '52.5%', // (400 + 20) / 800 = 52.5%
-            top: '16.66%', // (180 - 10 - 70) / 600 = 100/600 = 16.66%
-            width: '8.75%', // 70 / 800 = 8.75%
-            height: 'auto', // Preserve aspect ratio
-            pointerEvents: 'none', // Allow clicks to pass through to canvas
-            zIndex: 10 // Ensure it sits on top of canvas
+            left: '52.5%', 
+            top: '16.66%', 
+            width: '8.75%', 
+            height: 'auto', 
+            pointerEvents: 'none', 
+            zIndex: 10 
           }}
         />
       )}
