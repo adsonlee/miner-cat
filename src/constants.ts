@@ -3,7 +3,7 @@
 // ==========================================
 // 核心修复：直接导入图片资源
 // ==========================================
-import minerImg from './assets/miner.gif';
+import minerImg from './assets/miner.png';
 import hookImg from './assets/hook.png';
 import bgImg from './assets/background.png';
 import goldImg from './assets/gold.png';
