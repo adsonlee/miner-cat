@@ -213,41 +213,20 @@ const App: React.FC = () => {
   }, [gameState, level, generateLevel]);
   */
 
+  // ... 前面的 imports 和逻辑保持不变 ...
+
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-gray-800 overflow-hidden items-center justify-center">
+    // 修改外层 div：使用 flex 布局实现全屏居中
+    <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center p-4">
       
-      {/* Game Wrapper for Relative HUD positioning */}
-      <div className="relative w-full max-w-[800px]">
-        
-        {/* HUD Layer - Absolute over Canvas */}
-        <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-           <div className="flex items-center gap-2 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-xl border-4 border-yellow-200 shadow-lg font-black text-xl">
-              <Trophy size={24} />
-              <span>{score}</span>
-           </div>
-           <div className="text-xs font-bold text-white drop-shadow-md ml-1">
-             Target: {levelConfig.targetScore}
-           </div>
-        </div>
+      {/* 游戏标题 (可选) */}
+      <div className="fixed top-4 left-0 w-full text-center pointer-events-none z-0 opacity-50">
+        <h1 className="text-white text-2xl font-bold tracking-widest uppercase">Fuji Cat Miner</h1>
+      </div>
 
-        <div className="absolute top-4 right-4 z-20">
-           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border-4 shadow-lg font-black text-xl transition-colors ${gameTime < 10 ? 'bg-red-500 border-red-300 text-white animate-pulse' : 'bg-white border-gray-200 text-gray-700'}`}>
-              <Timer size={24} />
-              <span>{gameTime}</span>
-           </div>
-        </div>
-
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
-            <div className="flex items-center gap-1 bg-blue-500 text-white px-3 py-1 rounded-full border-2 border-blue-300 shadow-md font-bold text-sm">
-                <Star size={14} />
-                <span>Level {level}</span>
-            </div>
-        </div>
-
-
-
-        {/* Main Game Canvas */}
-        <GameCanvas 
+      {/* 游戏画布容器 */}
+      <div className="relative z-10 w-full max-w-[800px] shadow-2xl shadow-black/50">
+        <GameCanvas
           assets={assets}
           gameState={gameState}
           setGameState={setGameState}
@@ -255,27 +234,26 @@ const App: React.FC = () => {
           setScore={setScore}
           level={level}
           setLevel={setLevel}
-          levelConfig={levelConfig}
+          levelConfig={levelConfig} // 确保传入的是当前关卡的配置
           gameTime={gameTime}
           setGameTime={setGameTime}
           resetGame={resetGame}
           generateLevel={generateLevel}
           gameObjects={gameObjects}
           setGameObjects={setGameObjects}
-          onStartGame={handleStartGame}
-          onNextLevel={handleNextLevel}
+          onStartGame={startGame}
+          onNextLevel={nextLevel}
         />
+        
+        {/* UI 底部栏 (可选：显示当前分数和关卡) */}
+        <div className="mt-4 flex justify-between text-white font-mono text-lg px-2">
+           <span>Level: {level}</span>
+           <span>Target: {levelConfig.targetScore}</span>
+        </div>
       </div>
-
-      <p className="mt-4 text-center text-gray-500 text-sm font-medium">
-        矿工猫猫 &copy; Meow Corp
-      </p>
       
-      
-      
-
     </div>
   );
-};
+}
 
 export default App;
