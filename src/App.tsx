@@ -140,18 +140,19 @@ const App: React.FC = () => {
         {/* --- 顶部状态栏 (HUD) --- */}
         <div className="bg-slate-900/90 text-white px-6 py-4 flex justify-between items-center border-b-4 border-slate-700 shadow-md z-20">
            
-           {/* 分数面板 (修改点：更黑、更明显的背景) */}
-           <div className="flex flex-col">
+           {/* 分数面板 */}
+           {/* 修改：items-center 让文字和框居中对齐 */}
+           <div className="flex flex-col items-center">
               <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-1">Current Gold</span>
-              {/* 改动：bg-black (纯黑), shadow-inner (内阴影), border-slate-600 (边框更明显) */}
               <div className="bg-black shadow-inner px-4 py-2 rounded-lg border-2 border-slate-700 min-w-[120px]">
-                <span className="text-2xl font-mono text-amber-400 drop-shadow-md leading-none block text-right">
+                {/* 修改：text-center 让数字在框内居中 */}
+                <span className="text-2xl font-mono text-amber-400 drop-shadow-md leading-none block text-center">
                   {score.toString().padStart(4, '0')}
                 </span>
               </div>
            </div>
            
-           {/* 时间 (保持不变) */}
+           {/* 时间 */}
            <div className="flex flex-col items-center mx-4">
               <div className={`relative w-16 h-16 flex items-center justify-center rounded-full border-4 shadow-lg ${gameTime < 10 ? 'border-red-500 bg-red-900/20' : 'border-slate-600 bg-slate-800'}`}>
                 <span className={`text-2xl font-bold font-mono ${gameTime < 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
@@ -160,12 +161,13 @@ const App: React.FC = () => {
               </div>
            </div>
 
-           {/* 目标面板 (修改点：更黑、更明显的背景) */}
-           <div className="flex flex-col items-end">
+           {/* 目标面板 */}
+           {/* 修改：items-center 让文字和框居中对齐 */}
+           <div className="flex flex-col items-center">
               <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1">Target</span>
-              {/* 改动：bg-black (纯黑), shadow-inner (内阴影), border-slate-700 */}
               <div className="bg-black shadow-inner px-4 py-2 rounded-lg border-2 border-slate-700 min-w-[120px]">
-                <span className="text-2xl font-mono text-blue-300 drop-shadow-md leading-none block text-right">
+                {/* 修改：text-center 让数字在框内居中 */}
+                <span className="text-2xl font-mono text-blue-300 drop-shadow-md leading-none block text-center">
                    {INITIAL_LEVEL_CONFIG.targetScore + (level - 1) * 200}
                 </span>
               </div>
@@ -207,9 +209,8 @@ const App: React.FC = () => {
               <span className="text-slate-400 font-bold uppercase tracking-widest text-sm">Level {level}</span>
            </div>
            
-           {/* 改动：移除了右侧不需要的文字 */}
            <div className="flex gap-4 text-[10px] text-slate-500 uppercase font-mono">
-              {/* Empty or Add version number if needed */}
+              {/* Spacer */}
            </div>
         </div>
 
@@ -217,7 +218,7 @@ const App: React.FC = () => {
       
       {/* 底部版权 */}
       <div className="fixed bottom-2 text-white/10 text-xs">
-        © 2025 FUJI MINER CORP
+        © 2024 FUJI MINER CORP
       </div>
 
     </div>
