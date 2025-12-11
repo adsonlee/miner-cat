@@ -7,6 +7,13 @@ export enum GameState {
   GAME_OVER = 'GAME_OVER',
 }
 
+// 新增：排行榜记录接口
+export interface PlayerRecord {
+  name: string;
+  score: number;
+  date: string; // 记录日期
+}
+
 export interface GameAssets {
   ropeColor: string;
   minerImage?: string;
