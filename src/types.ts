@@ -2,16 +2,17 @@
 
 export enum GameState {
   MENU = 'MENU',
+  LEADERBOARD = 'LEADERBOARD', // 必须有这个
+  INPUT_NAME = 'INPUT_NAME',   // 必须有这个！缺少会导致逻辑错误
   PLAYING = 'PLAYING',
   LEVEL_END = 'LEVEL_END',
   GAME_OVER = 'GAME_OVER',
 }
 
-// 新增：排行榜记录接口
 export interface PlayerRecord {
   name: string;
   score: number;
-  date: string; // 记录日期
+  date: string;
 }
 
 export interface GameAssets {
@@ -47,15 +48,4 @@ export interface GameObject {
   type: 'gold' | 'rock' | 'diamond' | 'mystery';
   value: number;
   weight: number;
-}
-
-// 确保这段在文件的最下方，且没有被包裹在其他括号里
-export interface HookState {
-  angle: number;
-  direction: number;
-  isExtending: boolean;
-  isRetrieving: boolean;
-  x: number;
-  y: number;
-  attachedObject?: GameObject;
 }
