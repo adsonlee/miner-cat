@@ -350,7 +350,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-transparent">
+    <div className="relative w-full max-w-[800px] aspect-[4/3] mx-auto shadow-2xl rounded-xl overflow-hidden bg-transparent border-4 border-amber-500">
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
