@@ -175,7 +175,6 @@ const App: React.FC = () => {
   }, [gameState, gameTime]);
 
   return (
-    // 修改 1: 使用 h-[100dvh] 填满手机屏幕，移除默认 padding (p-0)，只在 PC (md) 上保留 padding
     <div className="h-[100dvh] w-full bg-zinc-900 flex items-center justify-center p-0 md:p-4 relative overflow-hidden font-sans select-none">
       
       <div className="absolute inset-0 opacity-10 pointer-events-none" 
@@ -187,14 +186,9 @@ const App: React.FC = () => {
       </div>
 
       {/* === 游戏机容器 === */}
-      {/* 修改 2: 
-          - 手机端: w-full h-full (全屏), border-0 (无边框), rounded-none (直角)
-          - PC端 (md): max-w-[800px], h-auto (自适应), rounded-3xl (圆角), border-8 (厚边框)
-      */}
       <div className="relative z-10 w-full h-full md:h-auto md:max-w-[800px] bg-slate-800 md:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-0 md:border-8 border-slate-700 ring-0 md:ring-1 ring-white/10 flex flex-col overflow-hidden">
         
         {/* --- 顶部 HUD --- */}
-        {/* 修改 3: 手机端 padding 减小 (py-2), PC端维持 (md:py-4) */}
         <div className="bg-slate-900/90 text-white px-4 py-2 md:px-6 md:py-4 flex justify-between items-center border-b-4 border-slate-700 shadow-md z-20 shrink-0">
            <div className="flex flex-col items-center">
               <span className="text-[9px] md:text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-1">Gold</span>
@@ -223,11 +217,18 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* --- 游戏屏幕区域 --- */}
-        {/* 修改 4: 使用 flex-1 让屏幕自动填满剩余空间，bg-black 居中显示内容 */}
+        {/* --- 游戏屏幕区域 (修复变形的关键区域) --- */}
+        {/* 1. 外层容器：黑色背景，使用 flex 居中 */}
         <div className="relative flex-1 w-full bg-black shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] flex items-center justify-center overflow-hidden">
-            {/* 保持 4:3 比例容器，在手机竖屏时可能上下会有黑边，横屏时左右会有黑边 */}
-            <div className="relative w-full h-full md:aspect-[4/3] max-h-full max-w-full">
+            
+            {/* 2. 游戏画面容器：
+                - aspect-[4/3]: 强制保持 4:3 比例
+                - w-full: 尝试占满宽度
+                - h-auto: 高度自动计算
+                - max-w-full & max-h-full: 关键点！防止宽度或高度超出父容器
+                - m-auto: 确保居中
+            */}
+            <div className="relative aspect-[4/3] w-full h-auto max-w-full max-h-full m-auto shadow-2xl">
               <GameCanvas
                 assets={DEFAULT_ASSETS}
                 gameState={gameState}
@@ -388,7 +389,6 @@ const App: React.FC = () => {
         </div>
 
         {/* --- 底部控制栏 --- */}
-        {/* 修改 5: 手机端更紧凑的 padding */}
         <div className="bg-slate-800 px-4 py-2 md:px-6 md:py-3 flex justify-between items-center border-t-4 border-slate-700 shrink-0">
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-green-500 animate-pulse"></div>
