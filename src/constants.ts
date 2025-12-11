@@ -20,7 +20,7 @@ import mysteryImg from './assets/mystery.png';
 // -----------------------------
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 600;
-export const MINER_OFFSET_Y = 100;
+export const MINER_OFFSET_Y = 180;
 
 // -----------------------------
 // 钩子物理参数
